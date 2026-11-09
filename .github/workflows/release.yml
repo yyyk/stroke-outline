@@ -1,0 +1,99 @@
+# Release: run by hand from the Actions tab ("Run workflow") on main.
+#
+# Before running it, bump the version in js/package.json and CMakeLists.txt
+# (project(... VERSION x.y.z)) and add a dated "## [x.y.z] - YYYY-MM-DD" entry
+# to CHANGELOG.md, then merge that to main. The workflow then:
+#
+#   1. checks the versions match, the CHANGELOG entry exists and is dated, and
+#      the tag vX.Y.Z doesn't exist yet;
+#   2. builds and tests everything (C++, WASM, npm package);
+#   3. creates the tag and a GitHub release with the CHANGELOG entry as notes;
+#   4. publishes the npm package, with provenance.
+#
+# Publishing is last because it can't be undone; if it fails, the release and
+# tag can be deleted (or the publish retried) by hand.
+#
+# npm authentication uses trusted publishing (no token): on npmjs.com, in the
+# package's settings, add this repository and the workflow file `release.yml`
+# as a trusted publisher. The package has to exist first, so the very first
+# version is published by hand.
+name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write # create the tag and the GitHub release
+  id-token: write # npm trusted publishing and provenance
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # all tags, to check the new one doesn't exist
+
+      - name: Check versions, CHANGELOG and tag
+        id: version
+        run: |
+          version=$(node -p "require('./js/package.json').version")
+          cmake_version=$(sed -nE 's/^project\([^)]*VERSION ([0-9.]+).*/\1/p' CMakeLists.txt)
+          if [ "$version" != "$cmake_version" ]; then
+            echo "::error::js/package.json is $version but CMakeLists.txt is $cmake_version"; exit 1
+          fi
+          if ! grep -qE "^## \[$version\] - [0-9]{4}-[0-9]{2}-[0-9]{2}$" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md needs a dated entry: ## [$version] - YYYY-MM-DD"; exit 1
+          fi
+          if git rev-parse -q --verify "refs/tags/v$version" >/dev/null; then
+            echo "::error::tag v$version already exists"; exit 1
+          fi
+          # Release notes: the CHANGELOG entry, without its heading.
+          awk -v v="$version" '
+            $0 ~ "^## \\[" v "\\]" { on = 1; next }
+            on && /^## \[/ { exit }
+            on && /^\[[^]]+\]: / { next }
+            on { print }
+          ' CHANGELOG.md > release-notes.md
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - run: sudo apt-get install -y ninja-build
+      - uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 6.0.13
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      - name: C++ tests
+        run: |
+          cmake --preset native
+          cmake --build --preset native-release
+          ctest --preset native-release
+      - name: Build the WASM module
+        run: cmake --preset wasm && cmake --build --preset wasm-release
+      - name: npm package — build, test, check contents
+        working-directory: js
+        run: |
+          npm ci
+          npm test
+          npm publish --dry-run
+
+      - name: Create the tag and GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh release create "v${{ steps.version.outputs.version }}"
+          --target "$GITHUB_SHA"
+          --title "stroke-outline ${{ steps.version.outputs.version }}"
+          --notes-file release-notes.md
+
+      - name: Publish to npm
+        working-directory: js
+        run: npm publish --provenance --access public

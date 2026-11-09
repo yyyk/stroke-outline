@@ -200,8 +200,7 @@ const d = so.buildOutline('M 10 10 H 90 A 20 20 0 0 1 90 50', { lineWidth: 8, li
 ```
 
 Build it with the WASM module (`cmake --preset wasm && cmake --build --preset
-wasm-release`), then `cd js && npm install && npm test`. It's marked
-`"private": true` until a name is chosen and it's ready to publish.
+wasm-release`), then `cd js && npm install && npm test`.
 
 ### The raw module
 

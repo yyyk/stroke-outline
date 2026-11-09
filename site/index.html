@@ -121,8 +121,10 @@ const path = new so.Path().moveTo(0, 0).lineTo(100, 0).quadTo(150, 50, 100, 100)
 const dashed = so.buildOutline(path, { lineWidth: 6, dash: [12, 6] });
 ctx.fill(new Path2D(dashed.toSVG())); // each dash is its own subpath</code></pre>
 			<p>
-				The package isn't on npm yet; build it from source (see the
-				<a href="https://github.com/yyyk/stroke-outline#readme">README</a>).
+				On npm as
+				<a href="https://www.npmjs.com/package/stroke-outline">stroke-outline</a>, with
+				TypeScript types. It works in browsers, workers and Node 20+ with no bundler
+				setup: the WebAssembly is embedded in the package.
 			</p>
 
 			<h2>C++</h2>
