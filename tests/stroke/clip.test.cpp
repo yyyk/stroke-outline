@@ -16,10 +16,22 @@ using namespace test_support;
 
 TEST_CASE("clip_to_shape: a normal-width inside stroke is left alone")
 {
-	SUBCASE("square") { check_inside_stroke(kSquare, width(20.0)); }
-	SUBCASE("L-shape") { check_inside_stroke(kLShape, width(10.0, LineJoin::Round)); }
-	SUBCASE("circle") { check_inside_stroke(kCircle, width(30.0)); }
-	SUBCASE("rounded rect") { check_inside_stroke(kRoundedRect, width(30.0)); }
+	SUBCASE("square")
+	{
+		check_inside_stroke(kSquare, width(20.0));
+	}
+	SUBCASE("L-shape")
+	{
+		check_inside_stroke(kLShape, width(10.0, LineJoin::Round));
+	}
+	SUBCASE("circle")
+	{
+		check_inside_stroke(kCircle, width(30.0));
+	}
+	SUBCASE("rounded rect")
+	{
+		check_inside_stroke(kRoundedRect, width(30.0));
+	}
 }
 
 TEST_CASE("clip_to_shape: a stroke just under the collapse width keeps a tiny hole")
@@ -29,21 +41,42 @@ TEST_CASE("clip_to_shape: a stroke just under the collapse width keeps a tiny ho
 
 TEST_CASE("clip_to_shape: a stroke wider than the shape fills it completely")
 {
-	SUBCASE("square, inner edge inverts") { check_inside_stroke(kSquare, width(60.0)); }
-	SUBCASE("square, inner edge inverts further") { check_inside_stroke(kSquare, width(80.0)); }
+	SUBCASE("square, inner edge inverts")
+	{
+		check_inside_stroke(kSquare, width(60.0));
+	}
+	SUBCASE("square, inner edge inverts further")
+	{
+		check_inside_stroke(kSquare, width(80.0));
+	}
 	SUBCASE("square, inner edge self-intersects and escapes")
 	{
 		check_inside_stroke(kSquare, width(150.0));
 	}
-	SUBCASE("L-shape") { check_inside_stroke(kLShape, width(20.0, LineJoin::Round)); }
-	SUBCASE("L-shape, wider") { check_inside_stroke(kLShape, width(40.0, LineJoin::Round)); }
-	SUBCASE("triangle") { check_inside_stroke(kTriangle, width(50.0)); }
+	SUBCASE("L-shape")
+	{
+		check_inside_stroke(kLShape, width(20.0, LineJoin::Round));
+	}
+	SUBCASE("L-shape, wider")
+	{
+		check_inside_stroke(kLShape, width(40.0, LineJoin::Round));
+	}
+	SUBCASE("triangle")
+	{
+		check_inside_stroke(kTriangle, width(50.0));
+	}
 	SUBCASE("circle, inner edge turns inside out")
 	{
 		check_inside_stroke(kCircle, width(70.0));
 	}
-	SUBCASE("half-disc") { check_inside_stroke(kHalfDisc, width(30.0)); }
-	SUBCASE("rounded rect") { check_inside_stroke(kRoundedRect, width(60.0)); }
+	SUBCASE("half-disc")
+	{
+		check_inside_stroke(kHalfDisc, width(30.0));
+	}
+	SUBCASE("rounded rect")
+	{
+		check_inside_stroke(kRoundedRect, width(60.0));
+	}
 }
 
 TEST_CASE("clip_to_shape: a narrow part collapses while wide parts keep their holes")
@@ -77,9 +110,10 @@ TEST_CASE("a wide center stroke on a concave shape is correct under nonzero fill
 		const char* d;
 		double line_width;
 	};
-	for (const Case& c: { Case { "U-shape", kUShape, 70.0 },
-						  Case { "dumbbell", kDumbbell, 90.0 },
-						  Case { "star", kStar, 130.0 } })
+	for (const Case& c:
+		 { Case { "U-shape", kUShape, 70.0 },
+		   Case { "dumbbell", kDumbbell, 90.0 },
+		   Case { "star", kStar, 130.0 } })
 		for (const bool clip: { false, true })
 		{
 			CAPTURE(c.name);

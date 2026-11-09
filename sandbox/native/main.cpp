@@ -28,7 +28,8 @@ int main()
 	std::cout << "stroked square -> " << command_count << " path commands\n";
 
 	// SVG in, SVG out — including an arc, expanded to cubics internally.
-	const std::string svg = build_outline("M 10 10 H 90 A 20 20 0 0 1 90 50", settings).to_svg();
+	const std::string svg =
+		build_outline("M 10 10 H 90 A 20 20 0 0 1 90 50", settings).to_svg();
 	std::cout << "stroked SVG -> " << svg << "\n";
 
 	return 0;

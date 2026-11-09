@@ -58,7 +58,8 @@ TEST_CASE("square-cap dots follow the path direction")
 	settings.line_cap = LineCap::Square;
 	settings.dash = DashSettings { { 0.0, 1000.0 }, 0.0 };
 
-	const auto dots = subpaths_of(build_outline(Path {}.move_to(0, 0).line_to(50, 50), settings));
+	const auto dots =
+		subpaths_of(build_outline(Path {}.move_to(0, 0).line_to(50, 50), settings));
 
 	REQUIRE(dots.size() == 1);
 	CHECK(dots[0].max_x() == doctest::Approx(5.0 * std::sqrt(2.0)));

@@ -10,12 +10,21 @@ using namespace stroke_outline::bezier;
 
 namespace
 {
-	Vec2 at(const QuadraticBezier& q, double t) { return quadratic_bezier(q.p0, q.p1, q.p2, t); }
-	Vec2 at(const CubicBezier& c, double t) { return cubic_bezier(c.p0, c.p1, c.p2, c.p3, t); }
-	Vec2 at_line(Vec2 a, Vec2 b, double t) { return Vec2::lerp(a, b, t); }
+	Vec2 at(const QuadraticBezier& q, double t)
+	{
+		return quadratic_bezier(q.p0, q.p1, q.p2, t);
+	}
+	Vec2 at(const CubicBezier& c, double t)
+	{
+		return cubic_bezier(c.p0, c.p1, c.p2, c.p3, t);
+	}
+	Vec2 at_line(Vec2 a, Vec2 b, double t)
+	{
+		return Vec2::lerp(a, b, t);
+	}
 
 	// Each reported intersection's point lies on both curves at its parameters.
-	template<class A, class B>
+	template <class A, class B>
 	void check_hits(const std::vector<CurveIntersection>& hits, const A& a, const B& b)
 	{
 		for (const auto& h: hits)
@@ -29,16 +38,18 @@ namespace
 		}
 	}
 
-	const QuadraticBezier kArchQ { { 0, 0 }, { 50, 100 }, { 100, 0 } };              // peak y = 50
-	const CubicBezier kArchC { { 0, 0 }, { 0, 100 }, { 100, 100 }, { 100, 0 } };     // peak y = 75
+	const QuadraticBezier kArchQ { { 0, 0 }, { 50, 100 }, { 100, 0 } };           // peak y = 50
+	const CubicBezier kArchC { { 0, 0 }, { 0, 100 }, { 100, 100 }, { 100, 0 } };  // peak y = 75
 }
 
 TEST_CASE("a line crosses a quadratic arch twice")
 {
 	const auto hits = line_quadratic_intersections({ -10, 25 }, { 110, 25 }, kArchQ);
 	CHECK(hits.size() == 2);
-	check_hits(hits, [](double t) { return at_line({ -10, 25 }, { 110, 25 }, t); },
-			   [](double t) { return at(kArchQ, t); });
+	check_hits(
+		hits,
+		[](double t) { return at_line({ -10, 25 }, { 110, 25 }, t); },
+		[](double t) { return at(kArchQ, t); });
 	// A segment that stops short of the arch doesn't.
 	CHECK(line_quadratic_intersections({ 40, 60 }, { 60, 60 }, kArchQ).empty());
 }
@@ -47,8 +58,10 @@ TEST_CASE("a line crosses a cubic arch twice")
 {
 	const auto hits = line_cubic_intersections({ -10, 50 }, { 110, 50 }, kArchC);
 	CHECK(hits.size() == 2);
-	check_hits(hits, [](double t) { return at_line({ -10, 50 }, { 110, 50 }, t); },
-			   [](double t) { return at(kArchC, t); });
+	check_hits(
+		hits,
+		[](double t) { return at_line({ -10, 50 }, { 110, 50 }, t); },
+		[](double t) { return at(kArchC, t); });
 }
 
 TEST_CASE("two quadratics crossing twice")
@@ -56,8 +69,10 @@ TEST_CASE("two quadratics crossing twice")
 	const QuadraticBezier valley { { 0, 50 }, { 50, -50 }, { 100, 50 } };
 	const auto hits = quadratic_quadratic_intersections(kArchQ, valley);
 	CHECK(hits.size() == 2);
-	check_hits(hits, [](double t) { return at(kArchQ, t); },
-			   [&](double t) { return at(valley, t); });
+	check_hits(
+		hits,
+		[](double t) { return at(kArchQ, t); },
+		[&](double t) { return at(valley, t); });
 }
 
 TEST_CASE("a quadratic and a cubic crossing")
@@ -65,8 +80,10 @@ TEST_CASE("a quadratic and a cubic crossing")
 	const CubicBezier valley { { 0, 60 }, { 0, -20 }, { 100, -20 }, { 100, 60 } };
 	const auto hits = quadratic_cubic_intersections(kArchQ, valley);
 	CHECK(hits.size() == 2);
-	check_hits(hits, [](double t) { return at(kArchQ, t); },
-			   [&](double t) { return at(valley, t); });
+	check_hits(
+		hits,
+		[](double t) { return at(kArchQ, t); },
+		[&](double t) { return at(valley, t); });
 }
 
 TEST_CASE("two cubics crossing")

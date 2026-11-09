@@ -78,7 +78,6 @@ namespace
 				pen = *start;
 		};
 		for (const auto& c: contour)
-		{
 			if (std::holds_alternative<MoveTo>(c))
 			{
 				close();
@@ -105,7 +104,6 @@ namespace
 			}
 			else if (std::holds_alternative<Close>(c))
 				close();
-		}
 		close();
 		return edges;
 	}
@@ -351,8 +349,12 @@ namespace
 	// `margin`.
 	Box edge_box(const Edge& e, double margin)
 	{
-		Box b { std::min(e.p0.x, e.p3.x), std::min(e.p0.y, e.p3.y),
-				std::max(e.p0.x, e.p3.x), std::max(e.p0.y, e.p3.y) };
+		Box b {
+			std::min(e.p0.x, e.p3.x),
+			std::min(e.p0.y, e.p3.y),
+			std::max(e.p0.x, e.p3.x),
+			std::max(e.p0.y, e.p3.y)
+		};
 		const auto grow = [&](Vec2 q) {
 			b.min_x = std::min(b.min_x, q.x), b.max_x = std::max(b.max_x, q.x);
 			b.min_y = std::min(b.min_y, q.y), b.max_y = std::max(b.max_y, q.y);
@@ -440,7 +442,8 @@ namespace stroke_outline
 		};
 		std::vector<std::vector<Split>> splits(edges.size());
 		const auto add_split = [&](std::size_t i, double t, Vec2 pt) {
-			if (t <= 0.0 || t >= 1.0 || near(pt, edges[i].p0, tol) || near(pt, edges[i].p3, tol))
+			if (t <= 0.0 || t >= 1.0 || near(pt, edges[i].p0, tol)
+				|| near(pt, edges[i].p3, tol))
 				return;
 			splits[i].push_back({ t, pt });
 		};
@@ -534,11 +537,12 @@ namespace stroke_outline
 			const bool from_outline = i < outline_edges.size();
 			for (const auto& sub: subs)
 			{
-				const bool tiny = near(sub.p0, sub.p3, tol)
-								  && (sub.kind == Edge::Kind::Line
-									  || (near(sub.p0, sub.p1, tol)
-										  && (sub.kind == Edge::Kind::Quadratic
-											  || near(sub.p0, sub.p2, tol))));
+				const bool tiny =
+					near(sub.p0, sub.p3, tol)
+					&& (sub.kind == Edge::Kind::Line
+						|| (near(sub.p0, sub.p1, tol)
+							&& (sub.kind == Edge::Kind::Quadratic
+								|| near(sub.p0, sub.p2, tol))));
 				if (!tiny)
 					pieces.push_back({ sub, from_outline });
 			}
@@ -559,8 +563,12 @@ namespace stroke_outline
 			for (const auto& e: piece)
 			{
 				const Box b = edge_box(e, 0.0);
-				box = { std::min(box.min_x, b.min_x), std::min(box.min_y, b.min_y),
-						std::max(box.max_x, b.max_x), std::max(box.max_y, b.max_y) };
+				box = {
+					std::min(box.min_x, b.min_x),
+					std::min(box.min_y, b.min_y),
+					std::max(box.max_x, b.max_x),
+					std::max(box.max_y, b.max_y)
+				};
 			}
 			cover.push_back(std::move(piece));
 			cover_boxes.push_back(box);
@@ -596,26 +604,27 @@ namespace stroke_outline
 		// Visit `points` in order of `coord`, with `items` (sorted by their low
 		// bound) entering an active list as the sweep reaches them and leaving
 		// once it passes their high bound.
-		const auto sweep = [&](auto coord, auto low, auto high, std::size_t item_count, auto visit) {
-			std::vector<int> point_order(points.size()), item_order(item_count), active;
-			std::iota(point_order.begin(), point_order.end(), 0);
-			std::iota(item_order.begin(), item_order.end(), 0);
-			std::sort(point_order.begin(), point_order.end(), [&](int a, int b) {
-				return coord(points[a]) < coord(points[b]);
-			});
-			std::sort(item_order.begin(), item_order.end(), [&](int a, int b) {
-				return low(a) < low(b);
-			});
-			std::size_t next = 0;
-			for (const int pi: point_order)
-			{
-				const double c = coord(points[pi]);
-				while (next < item_order.size() && low(item_order[next]) <= c)
-					active.push_back(item_order[next++]);
-				std::erase_if(active, [&](int item) { return high(item) < c; });
-				visit(pi, active);
-			}
-		};
+		const auto sweep =
+			[&](auto coord, auto low, auto high, std::size_t item_count, auto visit) {
+				std::vector<int> point_order(points.size()), item_order(item_count), active;
+				std::iota(point_order.begin(), point_order.end(), 0);
+				std::iota(item_order.begin(), item_order.end(), 0);
+				std::sort(point_order.begin(), point_order.end(), [&](int a, int b) {
+					return coord(points[a]) < coord(points[b]);
+				});
+				std::sort(item_order.begin(), item_order.end(), [&](int a, int b) {
+					return low(a) < low(b);
+				});
+				std::size_t next = 0;
+				for (const int pi: point_order)
+				{
+					const double c = coord(points[pi]);
+					while (next < item_order.size() && low(item_order[next]) <= c)
+						active.push_back(item_order[next++]);
+					std::erase_if(active, [&](int item) { return high(item) < c; });
+					visit(pi, active);
+				}
+			};
 
 		std::vector<char> is_covered(points.size(), 0);
 		sweep(
@@ -625,7 +634,8 @@ namespace stroke_outline
 			cover.size(),
 			[&](int pi, const std::vector<int>& active) {
 				for (const int k: active)
-					if (cover_boxes[k].contains(points[pi]) && winding_number(points[pi], cover[k]) != 0)
+					if (cover_boxes[k].contains(points[pi])
+						&& winding_number(points[pi], cover[k]) != 0)
 					{
 						is_covered[pi] = 1;
 						return;
@@ -670,8 +680,8 @@ namespace stroke_outline
 		const double cell = tol * 4.0;
 		const auto cell_key = [&](Vec2 p) {
 			const auto q = [&](double v, double origin) {
-				return static_cast<std::uint64_t>(
-					static_cast<std::uint32_t>(static_cast<std::int64_t>(std::floor((v - origin) / cell))));
+				return static_cast<std::uint64_t>(static_cast<std::uint32_t>(
+					static_cast<std::int64_t>(std::floor((v - origin) / cell))));
 			};
 			return (q(p.x, min_x) << 32) | q(p.y, min_y);
 		};
@@ -712,10 +722,11 @@ namespace stroke_outline
 			for (const auto key: neighbour_keys(oriented.p0))
 				if (const auto it = kept_by_start.find(key); it != kept_by_start.end())
 					for (const int k: it->second)
-						duplicate = duplicate
-									|| (near(kept[k].p0, oriented.p0, tol)
-										&& near(kept[k].p3, oriented.p3, tol)
-										&& near(edge_point(kept[k], 0.5), kmid, tol));
+						duplicate =
+							duplicate
+							|| (near(kept[k].p0, oriented.p0, tol)
+								&& near(kept[k].p3, oriented.p3, tol)
+								&& near(edge_point(kept[k], 0.5), kmid, tol));
 			if (duplicate)
 				continue;
 			if (piece.from_outline)

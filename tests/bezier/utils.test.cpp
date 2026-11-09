@@ -11,9 +11,9 @@ TEST_CASE("find_derivative_extrema_for_quadratic finds the turning point, if any
 	const auto peak = find_derivative_extrema_for_quadratic(0, 10, 0);
 	REQUIRE(peak);
 	CHECK(*peak == doctest::Approx(0.5));
-	CHECK(!find_derivative_extrema_for_quadratic(0, 5, 10));    // monotone (straight)
-	CHECK(!find_derivative_extrema_for_quadratic(0, 30, 50));   // would turn at t = 3
-	CHECK(!find_derivative_extrema_for_quadratic(4, 4, 4));     // constant
+	CHECK(!find_derivative_extrema_for_quadratic(0, 5, 10));   // monotone (straight)
+	CHECK(!find_derivative_extrema_for_quadratic(0, 30, 50));  // would turn at t = 3
+	CHECK(!find_derivative_extrema_for_quadratic(4, 4, 4));    // constant
 }
 
 TEST_CASE("find_derivative_extrema_for_cubic finds up to two turning points")

@@ -127,7 +127,8 @@ TEST_CASE("build_outline strokes SVG data, the same as its parsed Path")
 
 TEST_CASE("from_svg reports no error for valid path data")
 {
-	for (const char* d: { "M 0 0 L 10 10 Z", "m1 2 3 4", "M.5.5L10-10", "M 0 0 a10 10 0 1110 10", "" })
+	for (const char* d:
+		 { "M 0 0 L 10 10 Z", "m1 2 3 4", "M.5.5L10-10", "M 0 0 a10 10 0 1110 10", "" })
 	{
 		CAPTURE(std::string(d));
 		std::optional<SvgParseError> error;
@@ -147,7 +148,10 @@ TEST_CASE("from_svg reports where and why parsing stopped, keeping what came bef
 	};
 	const Case cases[] = {
 		{ "M 0 0 L 10 10 X 5 5", "at position 14", "unknown command 'X'", "M 0 0 L 10 10" },
-		{ "M 0 0 L 10 10 L 20", "at position 18 (end of data)", "expected a number", "M 0 0 L 10 10" },
+		{ "M 0 0 L 10 10 L 20",
+		  "at position 18 (end of data)",
+		  "expected a number",
+		  "M 0 0 L 10 10" },
 		{ "M 0 0 A 10 10 0 2 0 20 0", "at position 16", "arc flag", "M 0 0" },
 		{ "M 0 0 L 1e999 0", "at position 8", "expected a number", "M 0 0" },
 		// Data must begin with a moveto; anything else renders nothing.
@@ -250,8 +254,16 @@ TEST_CASE("parse_svg_path reads numbers with exponents")
 TEST_CASE("every command reports a missing number, keeping what came before")
 {
 	// "1e" with no exponent digits is the number 1 followed by a stray "e".
-	for (const char* d: { "M 0 0 H", "M 0 0 V", "M 0 0 C 1 2 3", "M 0 0 S 1 2", "M 0 0 Q 1 2",
-						  "M 0 0 T", "M 0 0 L 1", "M 0 0 1" })
+	for (
+		const char* d:
+		{ "M 0 0 H",
+		  "M 0 0 V",
+		  "M 0 0 C 1 2 3",
+		  "M 0 0 S 1 2",
+		  "M 0 0 Q 1 2",
+		  "M 0 0 T",
+		  "M 0 0 L 1",
+		  "M 0 0 1" })
 	{
 		CAPTURE(std::string(d));
 		std::optional<SvgParseError> error;

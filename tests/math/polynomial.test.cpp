@@ -41,9 +41,9 @@ TEST_CASE("solve_quadratic: two roots, a double root, none, and the linear fallb
 TEST_CASE("solve_cubic: three real roots, one real root, a triple root, the quadratic fallback")
 {
 	check_roots(solve_cubic(1.0, -6.0, 11.0, -6.0), { 1.0, 2.0, 3.0 });  // (x-1)(x-2)(x-3)
-	check_roots(solve_cubic(1.0, 0.0, 0.0, -8.0), { 2.0 });             // x³-8
-	check_roots(solve_cubic(1.0, -3.0, 3.0, -1.0), { 1.0 });            // (x-1)³
-	check_roots(solve_cubic(0.0, 1.0, -3.0, 2.0), { 1.0, 2.0 });        // really quadratic
+	check_roots(solve_cubic(1.0, 0.0, 0.0, -8.0), { 2.0 });              // x³-8
+	check_roots(solve_cubic(1.0, -3.0, 3.0, -1.0), { 1.0 });             // (x-1)³
+	check_roots(solve_cubic(0.0, 1.0, -3.0, 2.0), { 1.0, 2.0 });         // really quadratic
 }
 
 TEST_CASE("a range keeps only the roots inside it")

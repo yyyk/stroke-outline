@@ -46,7 +46,7 @@ namespace stroke_outline
 	// unchanged, and the "is this coefficient ~0" tests below become relative,
 	// so they behave the same whatever units (lengths, at any scale) the
 	// coefficients carry. Returns false if every coefficient is zero.
-	template<class... T>
+	template <class... T>
 	inline bool normalize_coefficients(T&... coefficients)
 	{
 		const double largest = std::max({ std::abs(coefficients)... });

@@ -6,9 +6,9 @@
 
 #include "stroke_outline/stroke_outline.hpp"
 
-// These bindings are a pure consumer of the public API (Path + build_outline). They never touch the internal PathCommand/Vec2 types — the
-// JS boundary uses its own small POD mirror below. The npm package (js/) wraps
-// them in a friendlier API; these are the raw module functions.
+// These bindings are a pure consumer of the public API (Path + build_outline). They never touch
+// the internal PathCommand/Vec2 types — the JS boundary uses its own small POD mirror below.
+// The npm package (js/) wraps them in a friendlier API; these are the raw module functions.
 using namespace emscripten;
 using namespace stroke_outline;
 
@@ -182,8 +182,10 @@ namespace
 		double x,
 		double y)
 	{
-		auto cmds = to_js(Path {}.move_to(from_x, from_y).arc_to(
-			rx, ry, x_axis_rotation_deg, large_arc, sweep, x, y));
+		auto cmds = to_js(
+			Path {}
+				.move_to(from_x, from_y)
+				.arc_to(rx, ry, x_axis_rotation_deg, large_arc, sweep, x, y));
 		cmds.erase(cmds.begin());
 		return cmds;
 	}

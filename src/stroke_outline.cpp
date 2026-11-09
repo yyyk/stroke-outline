@@ -536,9 +536,10 @@ namespace
 					else if constexpr (std::is_same_v<T, CubicTo>)
 					{
 						const Vec2 p1 = cmd.control1, p2 = cmd.control2, p3 = cmd.end;
-						area += (6.0 * p0.cross(p1) + 3.0 * p0.cross(p2) + p0.cross(p3)
-								 + 3.0 * p1.cross(p2) + 3.0 * p1.cross(p3) + 6.0 * p2.cross(p3))
-								/ 10.0;
+						area +=
+							(6.0 * p0.cross(p1) + 3.0 * p0.cross(p2) + p0.cross(p3)
+							 + 3.0 * p1.cross(p2) + 3.0 * p1.cross(p3) + 6.0 * p2.cross(p3))
+							/ 10.0;
 					}
 				},
 				segment.command);
@@ -570,9 +571,14 @@ namespace
 				}
 				else if constexpr (std::is_same_v<T, CubicTo>)
 				{
-					if (const auto t = bezier::cubic_bezier_derivative(
-											p0, cmd.control1, cmd.control2, cmd.end, 0.5)
-										   .normalize())
+					if (const auto t =
+							bezier::cubic_bezier_derivative(
+								p0,
+								cmd.control1,
+								cmd.control2,
+								cmd.end,
+								0.5)
+								.normalize())
 						return std::pair {
 							bezier::cubic_bezier(p0, cmd.control1, cmd.control2, cmd.end, 0.5),
 							*t
@@ -630,8 +636,7 @@ namespace
 		const double magnitude =
 			std::max({ std::abs(min_x), std::abs(max_x), std::abs(min_y), std::abs(max_y) });
 		// A tenth of the coincidence tolerance, like the clipper's probe.
-		const double probe =
-			std::max(size * EPSILON.relative * 0.1, magnitude * EPSILON.noise);
+		const double probe = std::max(size * EPSILON.relative * 0.1, magnitude * EPSILON.noise);
 		const Vec2 left = perpendicular(mid->second);
 		const bool fill_left =
 			path_fill_contains(mid->first + left * probe, shape, settings.fill_rule);
@@ -962,7 +967,11 @@ namespace
 					std::abs(left_dist),
 					std::abs(right_dist),
 					compute_segments_signed_area(segments) > 0.0) :
-				finalize_open_path(offsets, settings, std::abs(left_dist), std::abs(right_dist));
+				finalize_open_path(
+					offsets,
+					settings,
+					std::abs(left_dist),
+					std::abs(right_dist));
 
 		if (defer && !is_closed)
 			defer->coverage.push_back(subpath_outline);
@@ -996,16 +1005,20 @@ namespace
 		// A segment is dropped only if it draws nothing: a curve whose end meets
 		// its start can still loop out through its control points. Such a closed
 		// loop is split in half, since curve offsetting needs distinct endpoints.
-		const auto add_segment = [&](const PathCommand& cmd, std::initializer_list<Vec2> points) {
+		const auto add_segment = [&](const PathCommand& cmd,
+									 std::initializer_list<Vec2> points) {
 			current.drew = true;
 			const Vec2 end = *(points.end() - 1);
-			if (std::ranges::none_of(points, [&](Vec2 p) { return !points_are_too_close(pen, p); }))
+			if (std::ranges::none_of(points, [&](Vec2 p) {
+					return !points_are_too_close(pen, p);
+				}))
 				return;
 			if (points_are_too_close(pen, end))
 			{
 				if (auto* q = std::get_if<QuadraticTo>(&cmd))
 				{
-					const auto [a, b] = bezier::split_quadratic_bezier(pen, q->control, q->end, 0.5);
+					const auto [a, b] =
+						bezier::split_quadratic_bezier(pen, q->control, q->end, 0.5);
 					current.segments.push_back(Segment { a.p0, QuadraticTo { a.p1, a.p2 } });
 					current.segments.push_back(Segment { b.p0, QuadraticTo { b.p1, b.p2 } });
 				}
@@ -1128,16 +1141,19 @@ namespace stroke_outline
 		// separately from (and only when there's no) full clip_to_shape pass.
 		ClipInput capped_dashes;
 		const double w = settings.line_width;
-		const auto emit_dot = [&](const DashDot& dot, std::pair<double, double> distances, ClipInput* defer) {
-			const double half_width = std::max(std::abs(distances.first), std::abs(distances.second));
-			const auto shape = generate_dot(dot.position, dot.tangent, half_width, settings.line_cap);
-			if (shape.empty())
-				return;
-			if (defer)
-				defer->coverage.push_back(shape);
-			auto& out = defer ? defer->outline : result;
-			out.insert(out.end(), shape.begin(), shape.end());
-		};
+		const auto emit_dot =
+			[&](const DashDot& dot, std::pair<double, double> distances, ClipInput* defer) {
+				const double half_width =
+					std::max(std::abs(distances.first), std::abs(distances.second));
+				const auto shape =
+					generate_dot(dot.position, dot.tangent, half_width, settings.line_cap);
+				if (shape.empty())
+					return;
+				if (defer)
+					defer->coverage.push_back(shape);
+				auto& out = defer ? defer->outline : result;
+				out.insert(out.end(), shape.begin(), shape.end());
+			};
 
 		for (const auto& subpath: split_subpaths(commands))
 		{
@@ -1154,17 +1170,20 @@ namespace stroke_outline
 			// needs choosing and strokes that overlap or cross holes come out
 			// right. Without it, the side is chosen once per subpath.
 			const bool aligned = subpath.is_closed && settings.align != StrokeAlign::Center;
-			ClipInput* defer = !aligned                                     ? nullptr :
-							   clip                                         ? &*clip :
-							   settings.dash && settings.line_cap != LineCap::Butt ? &capped_dashes :
-																			  nullptr;
-			const auto distances = defer ?
-									   std::optional { std::pair { w, -w } } :
-									   resolve_offset_distances(
-										   subpath.segments,
-										   subpath.is_closed,
-										   settings,
-										   commands);
+			ClipInput* defer =
+				!aligned ? nullptr :
+				clip     ? &*clip :
+				settings.dash && settings.line_cap != LineCap::Butt ?
+					   &capped_dashes :
+					   nullptr;
+			const auto distances =
+				defer ?
+					std::optional { std::pair { w, -w } } :
+					resolve_offset_distances(
+						subpath.segments,
+						subpath.is_closed,
+						settings,
+						commands);
 			if (!distances)
 				continue;
 
@@ -1187,7 +1206,13 @@ namespace stroke_outline
 			const auto dashed = dash_path(subpath_commands(subpath), *settings.dash, dots);
 			for (const auto& dash: split_subpaths(dashed))
 				if (!dash.segments.empty())
-					process_subpath(dash.segments, dash.is_closed, *distances, settings, result, defer);
+					process_subpath(
+						dash.segments,
+						dash.is_closed,
+						*distances,
+						settings,
+						result,
+						defer);
 			for (const auto& dot: dots)
 				emit_dot(dot, *distances, defer);
 		}

@@ -23,7 +23,8 @@ namespace
 				CHECK((arc[k - 1].p3 - arc[k].p0).length() < 1e-9);
 			for (int i = 0; i <= 8; ++i)
 			{
-				const Vec2 p = cubic_bezier(arc[k].p0, arc[k].p1, arc[k].p2, arc[k].p3, i / 8.0);
+				const Vec2 p =
+					cubic_bezier(arc[k].p0, arc[k].p1, arc[k].p2, arc[k].p3, i / 8.0);
 				CHECK((p - center).length() == doctest::Approx(r).epsilon(3e-4));
 			}
 		}
@@ -51,7 +52,9 @@ TEST_CASE("arc_to_cubic_beziers: a quarter turn is one segment, the long way thr
 	CHECK(long_way.size() == 3);
 	check_on_circle(long_way, c, 10);
 	// It goes round the other side, through angle -3π/4.
-	CHECK(std::atan2(midpoint(long_way).y, midpoint(long_way).x) == doctest::Approx(-3 * kPi / 4));
+	CHECK(
+		std::atan2(midpoint(long_way).y, midpoint(long_way).x)
+		== doctest::Approx(-3 * kPi / 4));
 }
 
 TEST_CASE("arc_to_cubic_beziers: equal start and end angles give a full circle")

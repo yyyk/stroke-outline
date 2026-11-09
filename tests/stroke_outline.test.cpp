@@ -319,8 +319,7 @@ TEST_CASE("a curve that ends where it starts is stroked, not dropped")
 	// points don't. It used to vanish entirely.
 	// The curve peaks at x = 75 (t = 1/2) and y = 400/9 (t = 2/3); the outline
 	// sits half the width (5) beyond.
-	const Subpath s =
-		stroke_single(Path::from_svg("M 0 0 C 100 0 100 100 0 0"), width(10.0));
+	const Subpath s = stroke_single(Path::from_svg("M 0 0 C 100 0 100 100 0 0"), width(10.0));
 	CHECK(s.max_x() == doctest::Approx(80.0).epsilon(0.01));
 	CHECK(s.max_y() == doctest::Approx(400.0 / 9.0 + 5.0).epsilon(0.01));
 }
@@ -341,7 +340,10 @@ TEST_CASE("inside alignment follows curves, not just segment endpoints")
 	{
 		check_inside_stroke(kLens, width(8.0), true, kQuadOffsetTolerance);
 	}
-	SUBCASE("collapsed, with clip_to_shape") { check_inside_stroke(kLens, width(60.0)); }
+	SUBCASE("collapsed, with clip_to_shape")
+	{
+		check_inside_stroke(kLens, width(60.0));
+	}
 }
 
 TEST_CASE("inside/outside alignment is relative to the whole shape, holes included")
@@ -352,10 +354,22 @@ TEST_CASE("inside/outside alignment is relative to the whole shape, holes includ
 	for (const bool clip: { false, true })
 	{
 		CAPTURE(clip);
-		SUBCASE("frame, inside") { check_stroke(kFrame, StrokeAlign::Inside, 12.0, clip); }
-		SUBCASE("frame, outside") { check_stroke(kFrame, StrokeAlign::Outside, 12.0, clip); }
-		SUBCASE("ring, inside") { check_stroke(kRing, StrokeAlign::Inside, 12.0, clip); }
-		SUBCASE("ring, outside") { check_stroke(kRing, StrokeAlign::Outside, 12.0, clip); }
+		SUBCASE("frame, inside")
+		{
+			check_stroke(kFrame, StrokeAlign::Inside, 12.0, clip);
+		}
+		SUBCASE("frame, outside")
+		{
+			check_stroke(kFrame, StrokeAlign::Outside, 12.0, clip);
+		}
+		SUBCASE("ring, inside")
+		{
+			check_stroke(kRing, StrokeAlign::Inside, 12.0, clip);
+		}
+		SUBCASE("ring, outside")
+		{
+			check_stroke(kRing, StrokeAlign::Outside, 12.0, clip);
+		}
 		SUBCASE("same-direction hole under even-odd, inside")
 		{
 			check_stroke(kSameDirFrame, StrokeAlign::Inside, 12.0, clip, FillRule::EvenOdd);
@@ -386,7 +400,8 @@ TEST_CASE("dashed inside/outside strokes stay on their side of the shape")
 			const std::string shape_d = d;
 			CAPTURE(shape_d);
 			const Path shape = Path::from_svg(d);
-			const auto inside = build_outline(shape, dashed(StrokeAlign::Inside, cap, { 20, 10 }));
+			const auto inside =
+				build_outline(shape, dashed(StrokeAlign::Inside, cap, { 20, 10 }));
 			const auto outside =
 				build_outline(shape, dashed(StrokeAlign::Outside, cap, { 20, 10 }));
 			CHECK(!inside.empty());
@@ -433,9 +448,10 @@ TEST_CASE("inside dots are half discs within the shape")
 		// 16 dots; corner dots are quarter discs. Area check: 12 half discs of
 		// radius 10 plus 4 quarter discs.
 		const double expected_area = (12 * 0.5 + 4 * 0.25) * 3.14159265 * 100.0;
-		const double covered = (1.0 - fill_difference(out, Path {}, kSquare, 0.0)) == 1.0 ?
-								   0.0 :
-								   fill_difference(out, Path {}, kSquare, 0.0) * 100.0 * 100.0;
+		const double covered =
+			(1.0 - fill_difference(out, Path {}, kSquare, 0.0)) == 1.0 ?
+				0.0 :
+				fill_difference(out, Path {}, kSquare, 0.0) * 100.0 * 100.0;
 		CHECK(covered == doctest::Approx(expected_area).epsilon(0.03));
 	}
 }
@@ -443,8 +459,7 @@ TEST_CASE("inside dots are half discs within the shape")
 TEST_CASE("a width that isn't a positive finite number strokes nothing")
 {
 	const Path line = Path {}.move_to(0, 0).line_to(100, 0);
-	for (const double w:
-		 { 0.0, -10.0, std::nan(""), std::numeric_limits<double>::infinity() })
+	for (const double w: { 0.0, -10.0, std::nan(""), std::numeric_limits<double>::infinity() })
 	{
 		CAPTURE(w);
 		CHECK(build_outline(line, { .line_width = w }).empty());
@@ -496,18 +511,20 @@ namespace
 	Path scaled(const Path& p, double s)
 	{
 		Path out;
-		p.for_each({
-			.move_to = [&](double x, double y) { out.move_to(x * s, y * s); },
-			.line_to = [&](double x, double y) { out.line_to(x * s, y * s); },
-			.quad_to = [&](double cx, double cy, double x, double y) {
-				out.quad_to(cx * s, cy * s, x * s, y * s);
-			},
-			.cubic_to =
-				[&](double c1x, double c1y, double c2x, double c2y, double x, double y) {
-					out.cubic_to(c1x * s, c1y * s, c2x * s, c2y * s, x * s, y * s);
-				},
-			.close = [&] { out.close(); },
-		});
+		p.for_each(
+			{
+				.move_to = [&](double x, double y) { out.move_to(x * s, y * s); },
+				.line_to = [&](double x, double y) { out.line_to(x * s, y * s); },
+				.quad_to =
+					[&](double cx, double cy, double x, double y) {
+						out.quad_to(cx * s, cy * s, x * s, y * s);
+					},
+				.cubic_to =
+					[&](double c1x, double c1y, double c2x, double c2y, double x, double y) {
+						out.cubic_to(c1x * s, c1y * s, c2x * s, c2y * s, x * s, y * s);
+					},
+				.close = [&] { out.close(); },
+			});
 		return out;
 	}
 
@@ -517,44 +534,48 @@ namespace
 		constexpr int kSteps = 16;
 		Points v;
 		double px = 0, py = 0;
-		p.for_each({
-			.move_to =
-				[&](double x, double y) {
-					v.push_back({ x, y });
-					px = x, py = y;
-				},
-			.line_to =
-				[&](double x, double y) {
-					for (int i = 1; i <= kSteps; ++i)
-					{
-						const double t = double(i) / kSteps;
-						v.push_back({ px + (x - px) * t, py + (y - py) * t });
-					}
-					px = x, py = y;
-				},
-			.quad_to =
-				[&](double cx, double cy, double x, double y) {
-					for (int i = 1; i <= kSteps; ++i)
-					{
-						const double t = double(i) / kSteps, u = 1 - t;
-						v.push_back({ u * u * px + 2 * u * t * cx + t * t * x,
-									  u * u * py + 2 * u * t * cy + t * t * y });
-					}
-					px = x, py = y;
-				},
-			.cubic_to =
-				[&](double c1x, double c1y, double c2x, double c2y, double x, double y) {
-					for (int i = 1; i <= kSteps; ++i)
-					{
-						const double t = double(i) / kSteps, u = 1 - t;
-						const double b0 = u * u * u, b1 = 3 * u * u * t, b2 = 3 * u * t * t,
-									 b3 = t * t * t;
-						v.push_back({ b0 * px + b1 * c1x + b2 * c2x + b3 * x,
-									  b0 * py + b1 * c1y + b2 * c2y + b3 * y });
-					}
-					px = x, py = y;
-				},
-		});
+		p.for_each(
+			{
+				.move_to =
+					[&](double x, double y) {
+						v.push_back({ x, y });
+						px = x, py = y;
+					},
+				.line_to =
+					[&](double x, double y) {
+						for (int i = 1; i <= kSteps; ++i)
+						{
+							const double t = double(i) / kSteps;
+							v.push_back({ px + (x - px) * t, py + (y - py) * t });
+						}
+						px = x, py = y;
+					},
+				.quad_to =
+					[&](double cx, double cy, double x, double y) {
+						for (int i = 1; i <= kSteps; ++i)
+						{
+							const double t = double(i) / kSteps, u = 1 - t;
+							v.push_back(
+								{ u * u * px + 2 * u * t * cx + t * t * x,
+								  u * u * py + 2 * u * t * cy + t * t * y });
+						}
+						px = x, py = y;
+					},
+				.cubic_to =
+					[&](double c1x, double c1y, double c2x, double c2y, double x, double y) {
+						for (int i = 1; i <= kSteps; ++i)
+						{
+							const double t = double(i) / kSteps, u = 1 - t;
+							const double
+								b0 = u * u * u,
+								b1 = 3 * u * u * t, b2 = 3 * u * t * t, b3 = t * t * t;
+							v.push_back(
+								{ b0 * px + b1 * c1x + b2 * c2x + b3 * x,
+								  b0 * py + b1 * c1y + b2 * c2y + b3 * y });
+						}
+						px = x, py = y;
+					},
+			});
 		return v;
 	}
 
@@ -593,11 +614,14 @@ namespace
 			CAPTURE(d);
 			StrokeSettings at_scale = settings;
 			at_scale.line_width *= s;
-			const Points got = samples(scaled(build_outline(scaled(shape, s), at_scale), 1 / s));
+			const Points got =
+				samples(scaled(build_outline(scaled(shape, s), at_scale), 1 / s));
 			REQUIRE(!got.empty());
 			// In line widths. Sampling alone leaves ~1e-3 of slack where the two
 			// outlines split curves at slightly different points.
-			CHECK(distance(got, reference) / settings.line_width < (s <= 1e-6 ? tiny_tolerance : 1e-2));
+			CHECK(
+				distance(got, reference) / settings.line_width
+				< (s <= 1e-6 ? tiny_tolerance : 1e-2));
 		}
 	}
 }
@@ -649,8 +673,12 @@ TEST_CASE("curves with a zero end tangent stroke like their visible direction")
 	// A control point sitting on an endpoint (common in SVG) makes the
 	// derivative vanish there; the tangent falls back to the next control
 	// point. All of these are straight along x, so the outline is the band.
-	for (const char* d: { "M 0 0 C 0 0 50 0 100 0", "M 0 0 C 50 0 100 0 100 0",
-						  "M 0 0 C 0 0 100 0 100 0", "M 0 0 Q 0 0 100 0", "M 0 0 Q 100 0 100 0" })
+	for (const char* d:
+		 { "M 0 0 C 0 0 50 0 100 0",
+		   "M 0 0 C 50 0 100 0 100 0",
+		   "M 0 0 C 0 0 100 0 100 0",
+		   "M 0 0 Q 0 0 100 0",
+		   "M 0 0 Q 100 0 100 0" })
 	{
 		CAPTURE(std::string(d));
 		auto settings = width(10.0);
@@ -667,7 +695,8 @@ TEST_CASE("straight curves stroke as a band, not a zero-width line")
 {
 	// Regression: a quadratic or cubic whose controls lie on the line between
 	// its ends (common in SVG) produced a zero-width outline.
-	for (const char* d: { "M 0 0 Q 50 0 100 0", "M 0 0 C 30 0 70 0 100 0", "M 0 0 C 0 0 50 0 100 0" })
+	for (const char* d:
+		 { "M 0 0 Q 50 0 100 0", "M 0 0 C 30 0 70 0 100 0", "M 0 0 C 0 0 50 0 100 0" })
 	{
 		CAPTURE(std::string(d));
 		const Subpath s = stroke_single(Path::from_svg(d), width(10.0));

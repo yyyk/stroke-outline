@@ -1,0 +1,62 @@
+# Build the docs site (with the WebAssembly module it runs on) and deploy it to
+# GitHub Pages on every push to main.
+name: Deploy site
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build site
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get install -y ninja-build
+      - uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 6.0.13
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            js/package-lock.json
+            site/package-lock.json
+
+      - name: Build the WASM module (publishes it into js/src/wasm)
+        run: cmake --preset wasm && cmake --build --preset wasm-release
+      - name: Install npm package dependencies
+        working-directory: js
+        run: npm ci
+      - name: Build the site
+        working-directory: site
+        run: npm ci && npm run build
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/dist
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

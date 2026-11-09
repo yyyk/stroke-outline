@@ -12,7 +12,7 @@ using namespace stroke_outline::bezier;
 namespace
 {
 	// Distance from p to the nearest of many samples along the curve.
-	template<class Eval>
+	template <class Eval>
 	double distance_to(Vec2 p, Eval eval)
 	{
 		double best = 1e300;
@@ -21,24 +21,36 @@ namespace
 		return best;
 	}
 
-	template<class Curves, class EvalPiece, class EvalSource>
-	void check_offset(const Curves& pieces, EvalPiece piece_at, EvalSource source_at, double d,
-					  double tolerance)
+	template <class Curves, class EvalPiece, class EvalSource>
+	void check_offset(
+		const Curves& pieces,
+		EvalPiece piece_at,
+		EvalSource source_at,
+		double d,
+		double tolerance)
 	{
 		REQUIRE(!pieces.empty());
 		for (std::size_t k = 0; k < pieces.size(); ++k)
 		{
 			// Pieces join end to end.
 			if (k > 0)
-				CHECK((piece_at(pieces[k - 1], 1.0) - piece_at(pieces[k], 0.0)).length() < 1e-9);
+				CHECK(
+					(piece_at(pieces[k - 1], 1.0) - piece_at(pieces[k], 0.0)).length() < 1e-9);
 			for (int i = 0; i <= 16; ++i)
-				CHECK(distance_to(piece_at(pieces[k], i / 16.0), source_at)
-					  == doctest::Approx(std::abs(d)).epsilon(tolerance));
+				CHECK(
+					distance_to(piece_at(pieces[k], i / 16.0), source_at)
+					== doctest::Approx(std::abs(d)).epsilon(tolerance));
 		}
 	}
 
-	Vec2 quad_at(const QuadraticBezier& q, double t) { return quadratic_bezier(q.p0, q.p1, q.p2, t); }
-	Vec2 cubic_at(const CubicBezier& c, double t) { return cubic_bezier(c.p0, c.p1, c.p2, c.p3, t); }
+	Vec2 quad_at(const QuadraticBezier& q, double t)
+	{
+		return quadratic_bezier(q.p0, q.p1, q.p2, t);
+	}
+	Vec2 cubic_at(const CubicBezier& c, double t)
+	{
+		return cubic_bezier(c.p0, c.p1, c.p2, c.p3, t);
+	}
 }
 
 TEST_CASE("offsetting a straight quadratic gives a parallel line")
@@ -71,8 +83,12 @@ TEST_CASE("offset curves stay at the offset distance from the source")
 	SUBCASE("gentle quadratic")
 	{
 		const QuadraticBezier src { { 0, 0 }, { 50, 20 }, { 100, 0 } };
-		check_offset(offset_quadratic_bezier(src.p0, src.p1, src.p2, 5.0), quad_at,
-					 [&](double t) { return quad_at(src, t); }, 5.0, 0.01);
+		check_offset(
+			offset_quadratic_bezier(src.p0, src.p1, src.p2, 5.0),
+			quad_at,
+			[&](double t) { return quad_at(src, t); },
+			5.0,
+			0.01);
 	}
 	SUBCASE("quarter-circle-like cubic, both sides")
 	{
@@ -80,8 +96,12 @@ TEST_CASE("offset curves stay at the offset distance from the source")
 		for (const double d: { 5.0, -5.0 })
 		{
 			CAPTURE(d);
-			check_offset(offset_cubic_bezier(src.p0, src.p1, src.p2, src.p3, d), cubic_at,
-						 [&](double t) { return cubic_at(src, t); }, d, 0.02);
+			check_offset(
+				offset_cubic_bezier(src.p0, src.p1, src.p2, src.p3, d),
+				cubic_at,
+				[&](double t) { return cubic_at(src, t); },
+				d,
+				0.02);
 		}
 	}
 }

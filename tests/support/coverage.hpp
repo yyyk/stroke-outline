@@ -29,40 +29,44 @@ namespace test_support
 		constexpr int kSteps = 32;
 		std::vector<Polyline> out;
 		Pt pen {};
-		path.for_each({
-			.move_to =
-				[&](double x, double y) {
-					out.push_back({ { x, y } });
-					pen = { x, y };
-				},
-			.line_to =
-				[&](double x, double y) {
-					out.back().push_back({ x, y });
-					pen = { x, y };
-				},
-			.quad_to =
-				[&](double cx, double cy, double x, double y) {
-					for (int i = 1; i <= kSteps; ++i)
-					{
-						const double t = double(i) / kSteps, u = 1.0 - t;
-						out.back().push_back({ u * u * pen.x + 2 * u * t * cx + t * t * x,
-											   u * u * pen.y + 2 * u * t * cy + t * t * y });
-					}
-					pen = { x, y };
-				},
-			.cubic_to =
-				[&](double c1x, double c1y, double c2x, double c2y, double x, double y) {
-					for (int i = 1; i <= kSteps; ++i)
-					{
-						const double t = double(i) / kSteps, u = 1.0 - t;
-						const double b0 = u * u * u, b1 = 3 * u * u * t, b2 = 3 * u * t * t,
-									 b3 = t * t * t;
-						out.back().push_back({ b0 * pen.x + b1 * c1x + b2 * c2x + b3 * x,
-											   b0 * pen.y + b1 * c1y + b2 * c2y + b3 * y });
-					}
-					pen = { x, y };
-				},
-		});
+		path.for_each(
+			{
+				.move_to =
+					[&](double x, double y) {
+						out.push_back({ { x, y } });
+						pen = { x, y };
+					},
+				.line_to =
+					[&](double x, double y) {
+						out.back().push_back({ x, y });
+						pen = { x, y };
+					},
+				.quad_to =
+					[&](double cx, double cy, double x, double y) {
+						for (int i = 1; i <= kSteps; ++i)
+						{
+							const double t = double(i) / kSteps, u = 1.0 - t;
+							out.back().push_back(
+								{ u * u * pen.x + 2 * u * t * cx + t * t * x,
+								  u * u * pen.y + 2 * u * t * cy + t * t * y });
+						}
+						pen = { x, y };
+					},
+				.cubic_to =
+					[&](double c1x, double c1y, double c2x, double c2y, double x, double y) {
+						for (int i = 1; i <= kSteps; ++i)
+						{
+							const double t = double(i) / kSteps, u = 1.0 - t;
+							const double
+								b0 = u * u * u,
+								b1 = 3 * u * u * t, b2 = 3 * u * t * t, b3 = t * t * t;
+							out.back().push_back(
+								{ b0 * pen.x + b1 * c1x + b2 * c2x + b3 * x,
+								  b0 * pen.y + b1 * c1y + b2 * c2y + b3 * y });
+						}
+						pen = { x, y };
+					},
+			});
 		return out;
 	}
 
@@ -141,9 +145,10 @@ namespace test_support
 			{
 				const Pt q { x, y };
 				const bool near_path = distance_to_boundary(truth_polys, q) <= reach;
-				const bool truth = near_path
-								   && (align == StrokeAlign::Center
-									   || in_fill(q) == (align == StrokeAlign::Inside));
+				const bool truth =
+					near_path
+					&& (align == StrokeAlign::Center
+						|| in_fill(q) == (align == StrokeAlign::Inside));
 				const int w = winding(out_polys, q);
 				++samples;
 				bad_nonzero += (w != 0) != truth;
@@ -152,7 +157,8 @@ namespace test_support
 		return { double(bad_nonzero) / samples, double(bad_evenodd) / samples };
 	}
 
-	inline Coverage inside_stroke_coverage(const char* d, StrokeSettings settings, bool clip = true)
+	inline Coverage
+		inside_stroke_coverage(const char* d, StrokeSettings settings, bool clip = true)
 	{
 		settings.align = StrokeAlign::Inside;
 		settings.clip_to_shape = clip;
@@ -194,12 +200,14 @@ namespace test_support
 	// outside) the shape's fill, allowing `slack` for points on its boundary.
 	// The default covers the flattening error of the test's own polyline for a
 	// curved shape (a point on a radius-50 arc sits ~0.015 outside its chord).
-	inline bool outline_stays(const Path& outline, const char* d, bool inside, double slack = 0.05)
+	inline bool
+		outline_stays(const Path& outline, const char* d, bool inside, double slack = 0.05)
 	{
 		const auto shape = flatten(Path::from_svg(d));
 		for (const auto& pl: flatten(outline))
 			for (const Pt p: pl)
-				if ((winding(shape, p) != 0) != inside && distance_to_boundary(shape, p) > slack)
+				if ((winding(shape, p) != 0) != inside
+					&& distance_to_boundary(shape, p) > slack)
 					return false;
 		return true;
 	}
@@ -257,14 +265,17 @@ namespace test_support
 	// outer edge (a hole under either fill rule); kSameDirFrame winds it the same
 	// way (a hole only under even-odd, as in many SVG icons).
 	inline constexpr const char* kFrame = "M 0 0 H 100 V 100 H 0 Z M 30 30 V 70 H 70 V 30 Z";
-	inline constexpr const char* kThinFrame = "M 0 0 H 100 V 100 H 0 Z M 15 15 V 85 H 85 V 15 Z";
-	inline constexpr const char* kSameDirFrame = "M 0 0 H 100 V 100 H 0 Z M 30 30 H 70 V 70 H 30 Z";
+	inline constexpr const char* kThinFrame =
+		"M 0 0 H 100 V 100 H 0 Z M 15 15 V 85 H 85 V 15 Z";
+	inline constexpr const char* kSameDirFrame =
+		"M 0 0 H 100 V 100 H 0 Z M 30 30 H 70 V 70 H 30 Z";
 	inline constexpr const char* kRing =
 		"M 0 50 A 50 50 0 1 1 100 50 A 50 50 0 1 1 0 50 Z "
 		"M 25 50 A 25 25 0 1 0 75 50 A 25 25 0 1 0 25 50 Z";
 	// Two squares overlapping in [40,60]²: parts of each one's edge lie inside
 	// the other, so they are not boundaries of the combined fill.
-	inline constexpr const char* kOverlapping = "M 0 0 H 60 V 60 H 0 Z M 40 40 H 100 V 100 H 40 Z";
+	inline constexpr const char* kOverlapping =
+		"M 0 0 H 60 V 60 H 0 Z M 40 40 H 100 V 100 H 40 Z";
 	inline constexpr const char* kStar =
 		"M 50 0 L 61 35 L 98 35 L 68 57 L 79 91 L 50 70 L 21 91 L 32 57 L 2 35 L 39 35 Z";
 	inline constexpr const char* kRoundedRect =

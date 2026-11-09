@@ -108,7 +108,8 @@ TEST_CASE("a [0, gap] dash pattern with round caps draws dots, including at the 
 	settings.line_cap = LineCap::Round;
 	settings.dash = DashSettings { { 0.0, 20.0 }, 0.0 };
 
-	const auto dots = subpaths_of(build_outline(Path {}.move_to(0, 0).line_to(100, 0), settings));
+	const auto dots =
+		subpaths_of(build_outline(Path {}.move_to(0, 0).line_to(100, 0), settings));
 
 	REQUIRE(dots.size() == 6);
 	for (std::size_t i = 0; i < dots.size(); ++i)
@@ -127,8 +128,9 @@ TEST_CASE("the dash pattern restarts at every subpath")
 	auto settings = width(2.0);
 	settings.dash = DashSettings { { 20.0, 10.0 }, 0.0 };
 
-	const auto dashes = subpaths_of(
-		build_outline(Path {}.move_to(0, 0).line_to(25, 0).move_to(0, 20).line_to(25, 20), settings));
+	const auto dashes = subpaths_of(build_outline(
+		Path {}.move_to(0, 0).line_to(25, 0).move_to(0, 20).line_to(25, 20),
+		settings));
 
 	REQUIRE(dashes.size() == 2);
 	for (const auto& dash: dashes)

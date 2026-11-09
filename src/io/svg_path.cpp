@@ -136,7 +136,8 @@ namespace
 
 namespace stroke_outline
 {
-	std::vector<PathCommand> parse_svg_path(std::string_view d, std::optional<SvgParseError>& error)
+	std::vector<PathCommand>
+		parse_svg_path(std::string_view d, std::optional<SvgParseError>& error)
 	{
 		error.reset();
 		std::vector<PathCommand> out;
@@ -186,8 +187,9 @@ namespace stroke_outline
 			else if (cmd == 0)
 			{
 				return fail(
-					out.empty() ? "path data must start with a moveto (M or m)" :
-								  "expected a command");
+					out.empty() ?
+						"path data must start with a moveto (M or m)" :
+						"expected a command");
 			}
 			// else: implicit repeat of the previous command (numbers only).
 

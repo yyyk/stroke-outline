@@ -25,44 +25,33 @@ namespace test_support
 		int cubics = 0;
 		bool closed = false;
 
-		double min_x() const
-		{
-			return std::ranges::min(points, {}, &Point::x).x;
-		}
-		double max_x() const
-		{
-			return std::ranges::max(points, {}, &Point::x).x;
-		}
-		double min_y() const
-		{
-			return std::ranges::min(points, {}, &Point::y).y;
-		}
-		double max_y() const
-		{
-			return std::ranges::max(points, {}, &Point::y).y;
-		}
+		double min_x() const { return std::ranges::min(points, {}, &Point::x).x; }
+		double max_x() const { return std::ranges::max(points, {}, &Point::x).x; }
+		double min_y() const { return std::ranges::min(points, {}, &Point::y).y; }
+		double max_y() const { return std::ranges::max(points, {}, &Point::y).y; }
 	};
 
 	inline std::vector<Subpath> subpaths_of(const Path& path)
 	{
 		std::vector<Subpath> out;
-		path.for_each({
-			.move_to = [&](double x, double y) { out.push_back({ { { x, y } } }); },
-			.line_to = [&](double x, double y) { out.back().points.push_back({ x, y }); },
-			.quad_to =
-				[&](double cx, double cy, double x, double y) {
-					out.back().points.push_back({ cx, cy });
-					out.back().points.push_back({ x, y });
-				},
-			.cubic_to =
-				[&](double c1x, double c1y, double c2x, double c2y, double x, double y) {
-					out.back().points.push_back({ c1x, c1y });
-					out.back().points.push_back({ c2x, c2y });
-					out.back().points.push_back({ x, y });
-					++out.back().cubics;
-				},
-			.close = [&] { out.back().closed = true; },
-		});
+		path.for_each(
+			{
+				.move_to = [&](double x, double y) { out.push_back({ { { x, y } } }); },
+				.line_to = [&](double x, double y) { out.back().points.push_back({ x, y }); },
+				.quad_to =
+					[&](double cx, double cy, double x, double y) {
+						out.back().points.push_back({ cx, cy });
+						out.back().points.push_back({ x, y });
+					},
+				.cubic_to =
+					[&](double c1x, double c1y, double c2x, double c2y, double x, double y) {
+						out.back().points.push_back({ c1x, c1y });
+						out.back().points.push_back({ c2x, c2y });
+						out.back().points.push_back({ x, y });
+						++out.back().cubics;
+					},
+				.close = [&] { out.back().closed = true; },
+			});
 		return out;
 	}
 

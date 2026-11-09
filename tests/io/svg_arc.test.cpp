@@ -20,8 +20,9 @@ namespace
 			for (int i = 0; i <= 32; ++i)
 			{
 				const double t = i / 32.0, u = 1 - t;
-				const double y = u * u * u * pen.y + 3 * u * u * t * c.control1.y
-								 + 3 * u * t * t * c.control2.y + t * t * t * c.end.y;
+				const double y =
+					u * u * u * pen.y + 3 * u * u * t * c.control1.y
+					+ 3 * u * t * t * c.control2.y + t * t * t * c.end.y;
 				if (std::abs(y) > std::abs(best))
 					best = y;
 			}
@@ -47,7 +48,9 @@ TEST_CASE("the four flag combinations pick the four candidate arcs")
 			REQUIRE(!arc.empty());
 			CHECK((arc.back().end - to).length() < 1e-9);
 			y[large][sweep] = extreme_y(arc, from);
-			CHECK(std::abs(y[large][sweep]) == doctest::Approx(large ? 186.6025 : 13.3975).epsilon(1e-3));
+			CHECK(
+				std::abs(y[large][sweep])
+				== doctest::Approx(large ? 186.6025 : 13.3975).epsilon(1e-3));
 		}
 	// The sweep flag (direction of travel) decides the side: both arcs with
 	// the same sweep bulge the same way, and flipping it flips the side.
@@ -79,7 +82,8 @@ TEST_CASE("x-axis rotation turns the ellipse")
 
 TEST_CASE("degenerate arcs produce no curves")
 {
-	CHECK(svg::arc_to_cubics({ 0, 0 }, 0, 10, 0, false, true, { 10, 0 }).empty());   // rx = 0
-	CHECK(svg::arc_to_cubics({ 0, 0 }, 10, 0, 0, false, true, { 10, 0 }).empty());   // ry = 0
-	CHECK(svg::arc_to_cubics({ 5, 5 }, 10, 10, 0, false, true, { 5, 5 }).empty());   // same point
+	CHECK(svg::arc_to_cubics({ 0, 0 }, 0, 10, 0, false, true, { 10, 0 }).empty());  // rx = 0
+	CHECK(svg::arc_to_cubics({ 0, 0 }, 10, 0, 0, false, true, { 10, 0 }).empty());  // ry = 0
+	CHECK(svg::arc_to_cubics({ 5, 5 }, 10, 10, 0, false, true, { 5, 5 }).empty());  // same
+																					// point
 }

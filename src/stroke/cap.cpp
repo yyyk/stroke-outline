@@ -26,8 +26,8 @@ namespace stroke_outline
 			}
 			case LineCap::Square:
 			{
-				const double reach =
-					std::max((left_point - position).length(), (right_point - position).length());
+				const double reach = std::
+					max((left_point - position).length(), (right_point - position).length());
 				const Vec2 extension = tangent * reach;
 				const Vec2 left_extended = left_point + extension;
 				const Vec2 right_extended = right_point + extension;

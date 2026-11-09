@@ -57,11 +57,8 @@ TEST_CASE("line_intersection: the parallel test is an angle, so it works at any 
 	for (const double s: { 1e-6, 1.0, 1e6 })
 	{
 		CAPTURE(s);
-		const auto hit = line_intersection(
-			{ 0, 0 },
-			{ s, 0 },
-			{ 0, s },
-			{ s, s - s * std::tan(angle) });
+		const auto hit =
+			line_intersection({ 0, 0 }, { s, 0 }, { 0, s }, { s, s - s * std::tan(angle) });
 		REQUIRE(hit);
 		CHECK(hit->y == doctest::Approx(0.0).scale(s));
 	}

@@ -12,7 +12,10 @@ namespace
 {
 	// An open right-angle polyline whose outer corner is at (100, 0). With a
 	// 20-wide stroke the miter tip lands exactly on (110, -10).
-	Path right_angle() { return Path {}.move_to(0, 0).line_to(100, 0).line_to(100, 100); }
+	Path right_angle()
+	{
+		return Path {}.move_to(0, 0).line_to(100, 0).line_to(100, 100);
+	}
 
 }
 

@@ -531,9 +531,10 @@ namespace stroke_outline
 					result,
 					need_move_to,
 					dots);
-				end_tangent = bezier::quadratic_bezier_derivative(current_point, q->control, q->end, 1.0)
-								  .normalize()
-								  .value_or(end_tangent);
+				end_tangent =
+					bezier::quadratic_bezier_derivative(current_point, q->control, q->end, 1.0)
+						.normalize()
+						.value_or(end_tangent);
 				open_subpath = true;
 				current_point = q->end;
 			}
@@ -549,7 +550,12 @@ namespace stroke_outline
 					need_move_to,
 					dots);
 				end_tangent =
-					bezier::cubic_bezier_derivative(current_point, c->control1, c->control2, c->end, 1.0)
+					bezier::cubic_bezier_derivative(
+						current_point,
+						c->control1,
+						c->control2,
+						c->end,
+						1.0)
 						.normalize()
 						.value_or(end_tangent);
 				open_subpath = true;
