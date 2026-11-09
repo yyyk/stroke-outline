@@ -109,12 +109,15 @@ if(EMSCRIPTEN)
     set(WASM_OUTPUTS
         "$<TARGET_FILE_DIR:${TARGET_NAME}_wasm>/${TARGET_NAME}.js"
         "$<TARGET_FILE_DIR:${TARGET_NAME}_wasm>/${TARGET_NAME}.d.ts")
+    # Release builds only: a Debug module is ~30x larger and unoptimized, and
+    # must never end up in the package. (`cmake -E true` does nothing.)
+    set(IF_RELEASE "$<IF:$<CONFIG:Release>")
     add_custom_command(TARGET ${TARGET_NAME}_wasm POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${PACKAGE_WASM_DIR}"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${WASM_OUTPUTS} "${PACKAGE_WASM_DIR}/"
+        COMMAND ${CMAKE_COMMAND} -E ${IF_RELEASE},make_directory,true> "${PACKAGE_WASM_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E ${IF_RELEASE},copy_if_different,true> ${WASM_OUTPUTS} "${PACKAGE_WASM_DIR}/"
         # A separate .wasm from a build before SINGLE_FILE would be stale.
-        COMMAND ${CMAKE_COMMAND} -E rm -f "${PACKAGE_WASM_DIR}/${TARGET_NAME}.wasm"
-        COMMENT "Publishing WASM module into js/src/wasm")
+        COMMAND ${CMAKE_COMMAND} -E ${IF_RELEASE},rm,true> -f "${PACKAGE_WASM_DIR}/${TARGET_NAME}.wasm"
+        COMMENT "Publishing WASM module into js/src/wasm (Release builds only)")
 else()
     # ----- Native build: sandbox demo + tests -----
     add_subdirectory(sandbox/native)

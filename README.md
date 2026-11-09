@@ -1,5 +1,8 @@
 # stroke-outline
 
+[![npm](https://img.shields.io/npm/v/stroke-outline)](https://www.npmjs.com/package/stroke-outline)
+[![CI](https://github.com/yyyk/stroke-outline/actions/workflows/ci.yml/badge.svg)](https://github.com/yyyk/stroke-outline/actions/workflows/ci.yml)
+
 A small C++20 library that turns a vector path into the filled outline of its
 stroke — the same geometry a 2D canvas produces for `stroke()`, but returned as
 a path you can fill, cache, or hit-test. It builds for **native** and
@@ -261,6 +264,19 @@ cd sandbox/web
 npm run format         # rewrite
 npm run format:check   # CI
 ```
+
+## Releasing
+
+1. Bump the version in `js/package.json` and `CMakeLists.txt`
+   (`project(... VERSION x.y.z)`), and add a dated `## [x.y.z] - YYYY-MM-DD`
+   entry to `CHANGELOG.md`. Merge to `main`.
+2. In GitHub, run the **Release** workflow (Actions → Release → Run workflow).
+   It checks the versions and CHANGELOG, runs every test, creates the tag
+   `vx.y.z` and a GitHub release, then publishes the npm package.
+
+npm publishing uses trusted publishing: the package's settings on npmjs.com
+list this repository's `release.yml` as a trusted publisher, so no token is
+stored anywhere.
 
 ## License
 
