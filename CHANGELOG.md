@@ -5,6 +5,15 @@ All notable changes to this project are documented here. The format follows
 [Semantic Versioning](https://semver.org/) (while the version is 0.x, minor
 versions may change the API).
 
+## [0.1.1] - 2026-11-09
+
+### Fixed
+
+- The npm package of 0.1.0 contained a debug build of the WebAssembly module
+  by mistake: about 9.4 MB unpacked instead of 0.3 MB, and unoptimized, so
+  slower. 0.1.1 is the optimized build; the API and results are unchanged. The
+  C++ library is unaffected.
+
 ## [0.1.0] - 2026-11-09
 
 First release: a C++20 library, and an npm package built from it for

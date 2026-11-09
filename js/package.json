@@ -1,6 +1,6 @@
 {
   "name": "stroke-outline",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Stroke vector paths into fillable outlines: joins, caps, dashes, inside/outside alignment and clipping. WebAssembly build of a C++ library.",
   "keywords": [
     "stroke",

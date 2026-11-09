@@ -12,7 +12,7 @@ if (USE_EMSCRIPTEN)
     include(find-Emscripten)
 endif()
 
-project(${TARGET_NAME} VERSION 0.1.0 LANGUAGES CXX)
+project(${TARGET_NAME} VERSION 0.1.1 LANGUAGES CXX)
 
 # Guard against being added twice (e.g. two consumers FetchContent this lib).
 if (TARGET ${TARGET_NAME})
