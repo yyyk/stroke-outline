@@ -90,8 +90,12 @@ if(EMSCRIPTEN)
         --bind
         -sMODULARIZE=1
         -sEXPORT_ES6=1
-        # node too: the npm package (js/) runs in Node (tests, server-side use).
-        -sENVIRONMENT=web,worker,node
+        # No `node`: its startup code imports node:module, which every browser
+        # bundler (e.g. Vite) warns about. The package still runs in Node 20+,
+        # which has the web APIs the module uses; the .wasm is embedded
+        # (SINGLE_FILE), so there is no file to read from disk. CI runs the JS
+        # tests on Node 20, 22 and 24 to keep it that way.
+        -sENVIRONMENT=web,worker
         -sALLOW_MEMORY_GROWTH=1
         # Embed the .wasm in the .js (base64), so the package needs no bundler
         # or server setup to find it (Vite's dev server, for one, can't locate a
