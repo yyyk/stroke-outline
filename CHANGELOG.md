@@ -5,6 +5,19 @@ All notable changes to this project are documented here. The format follows
 [Semantic Versioning](https://semver.org/) (while the version is 0.x, minor
 versions may change the API).
 
+## [0.1.2] - 2026-11-09
+
+### Fixed
+
+- Browser bundlers (e.g. Vite) no longer warn that `node:module` "has been
+  externalized for browser compatibility" when building an app that uses the
+  package. Node 20+ is still supported.
+
+### Changed
+
+- The npm package's homepage link now points to the docs site,
+  https://yyyk.github.io/stroke-outline/.
+
 ## [0.1.1] - 2026-11-09
 
 ### Fixed
