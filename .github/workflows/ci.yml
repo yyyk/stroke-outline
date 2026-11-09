@@ -23,7 +23,7 @@ jobs:
         os: [ubuntu-24.04, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install Ninja
         run: ${{ runner.os == 'Linux' && 'sudo apt-get install -y ninja-build' || 'brew install ninja' }}
       - run: cmake --preset native
@@ -36,7 +36,7 @@ jobs:
     env:
       UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: sudo apt-get install -y ninja-build
       - name: Configure
         run: >
@@ -52,7 +52,7 @@ jobs:
     name: C++ formatting
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # Pinned: clang-format's output changes between versions. Use the same
       # version locally (`pip install clang-format==21.1.8`).
       - run: pip install clang-format==21.1.8
@@ -66,12 +66,12 @@ jobs:
     name: WASM, npm package, site and sandbox
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: sudo apt-get install -y ninja-build
       - uses: mymindstorm/setup-emsdk@v14
         with:
           version: 6.0.13
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
