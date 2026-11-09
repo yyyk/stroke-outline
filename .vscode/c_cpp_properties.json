@@ -1,0 +1,36 @@
+{
+  "version": 4,
+  "configurations": [
+    {
+      "name": "Mac",
+      "compileCommands": "${workspaceFolder}/build/native/compile_commands.json",
+      "includePath": [
+        "${workspaceFolder}/include",
+        "${workspaceFolder}/src"
+      ],
+      "compilerPath": "/usr/bin/clang++",
+      "cStandard": "c17",
+      "cppStandard": "c++20",
+      "intelliSenseMode": "macos-clang-arm64"
+    },
+    {
+      "name": "Emscripten",
+      "includePath": [
+        "${workspaceFolder}/include",
+        "${workspaceFolder}/src",
+        "/opt/homebrew/opt/emscripten/libexec/cache/sysroot/include",
+        "/opt/homebrew/opt/emscripten/libexec/cache/sysroot/include/c++/v1"
+      ],
+      "defines": ["__EMSCRIPTEN__"],
+      "macFrameworkPath": ["/System/Library/Frameworks", "/Library/Frameworks"],
+      "compilerPath": "/usr/bin/clang++",
+      "cStandard": "c17",
+      "cppStandard": "c++20",
+      "intelliSenseMode": "macos-clang-arm64"
+    },
+    {
+      "name": "CMake",
+      "configurationProvider": "ms-vscode.cmake-tools"
+    }
+  ]
+}

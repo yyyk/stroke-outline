@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>stroke-outline · wasm sandbox</title>
+		<style>
+			:root {
+				color-scheme: light dark;
+			}
+			body {
+				font:
+					15px/1.5 system-ui,
+					sans-serif;
+				margin: 2rem auto;
+				padding: 0 1rem;
+				max-width: fit-content;
+			}
+			h1 {
+				font-size: 1.4rem;
+			}
+			canvas {
+				border: 1px solid #8884;
+				border-radius: 8px;
+				background: #fff;
+			}
+			.status {
+				color: #888;
+				font-size: 0.85rem;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>stroke-outline · wasm sandbox</h1>
+		<p class="status" id="status">Loading WASM module…</p>
+
+		<canvas id="canvas"></canvas>
+
+		<script type="module" src="/src/main.ts"></script>
+	</body>
+</html>

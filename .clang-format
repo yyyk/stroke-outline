@@ -1,0 +1,72 @@
+---
+
+# Style options up to clang-format version 16.0.5
+# Only settings with non-default values are listed
+
+AccessModifierOffset: -4
+AlignAfterOpenBracket: AlwaysBreak
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortFunctionsOnASingleLine: InlineOnly
+AlwaysBreakBeforeMultilineStrings: true
+AlwaysBreakTemplateDeclarations: Yes
+BinPackArguments: false
+BinPackParameters: false
+BraceWrapping:
+  AfterCaseLabel:  true
+  AfterClass:      true
+  AfterControlStatement: Always
+  AfterEnum:       false
+  AfterExternBlock: true
+  AfterFunction:   true
+  AfterNamespace:  true
+  AfterObjCDeclaration: false
+  AfterStruct:     true
+  AfterUnion:      true
+  BeforeCatch:     true
+  BeforeElse:      true
+  BeforeLambdaBody: false
+  BeforeWhile:     true
+  IndentBraces:    false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: true
+BreakArrays:     false
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeBraces: Custom
+BreakBeforeTernaryOperators: false
+ColumnLimit:     96
+Cpp11BracedListStyle: false
+EmptyLineBeforeAccessModifier: Always
+FixNamespaceComments: false
+IndentCaseLabels: true
+IndentPPDirectives: AfterHash
+IndentWidth:     4
+IndentWrappedFunctionNames: true
+InsertNewlineAtEOF: true
+IntegerLiteralSeparator:
+  Binary:          4
+  BinaryMinDigits: 5
+  Decimal:         3
+  DecimalMinDigits: 5
+  Hex:             4
+  HexMinDigits:    5
+JavaScriptQuotes: Single
+LineEnding:      LF
+MaxEmptyLinesToKeep: 3
+NamespaceIndentation: All
+PackConstructorInitializers: CurrentLine
+PenaltyBreakAssignment: 0
+PenaltyBreakBeforeFirstCallParameter: 0
+PenaltyBreakComment: 20
+PenaltyBreakOpenParenthesis: 100
+PenaltyIndentedWhitespace: 100
+PointerAlignment: Left
+RemoveBracesLLVM: true
+RemoveSemicolon: true
+SortIncludes:    Never
+SpaceBeforeCpp11BracedList: true
+SpaceBeforeRangeBasedForLoopColon: false
+SpacesBeforeTrailingComments: 2
+TabWidth:        4
+UseTab:          ForContinuationAndIndentation

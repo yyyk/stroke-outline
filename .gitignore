@@ -1,0 +1,22 @@
+/build/
+/bin/
+*.o
+*.a
+.DS_Store
+
+# sandbox (Vite)
+node_modules/
+sandbox/web/dist/
+
+# npm package (js/): build output, and the WASM module published by cmake
+js/node_modules/
+js/dist/
+js/src/wasm/
+js/*.tgz
+# copied from the repository root by the package build
+js/LICENSE
+js/THIRD_PARTY_NOTICES
+
+# docs site
+site/node_modules/
+site/dist/

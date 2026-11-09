@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>stroke-outline</title>
+		<meta
+			name="description"
+			content="Stroke vector paths into fillable outlines: joins, caps, dashes, inside/outside strokes. C++ and WebAssembly."
+		/>
+		<script type="module" src="/src/main.ts"></script>
+	</head>
+	<body>
+		<main>
+			<h1>stroke-outline</h1>
+			<p class="lead">
+				Turns a vector path into the outline of its stroke, the shape a canvas paints
+				for
+				<code>stroke()</code>, as a path you can fill, cache, hit-test or tessellate.
+				Curves stay curves. Written in C++20, and also built for WebAssembly as an npm
+				package.
+			</p>
+
+			<div class="demo">
+				<form class="controls" id="demo-form">
+					<label
+						>path
+						<select name="shape">
+							<option value="curve">open curve</option>
+							<option value="star">star</option>
+							<option value="frame">square with a hole</option>
+						</select></label
+					>
+					<label
+						>lineWidth
+						<input type="range" name="width" min="1" max="80" value="14" /><output
+							for="width"
+						></output
+					></label>
+					<label
+						>lineJoin
+						<select name="join">
+							<option>miter</option>
+							<option>bevel</option>
+							<option selected>round</option>
+						</select></label
+					>
+					<label
+						>lineCap
+						<select name="cap">
+							<option>butt</option>
+							<option>square</option>
+							<option selected>round</option>
+						</select></label
+					>
+					<label
+						>align
+						<select name="align">
+							<option>center</option>
+							<option>inside</option>
+							<option>outside</option>
+						</select></label
+					>
+					<label><input type="checkbox" name="dashed" /> dashed</label>
+					<label><input type="checkbox" name="clip" /> clipToShape</label>
+				</form>
+				<canvas id="demo"></canvas>
+				<p class="caption">
+					Gray with a red edge: the outline the library computed.<br />
+					Dashed: the input path.<br />
+					Try the star with an inside stroke wider than its arms (around 40), with and
+					without clipToShape.<br />
+					<!-- <code id="demo-code"></code> -->
+				</p>
+			</div>
+
+			<h2>Features</h2>
+			<ul>
+				<li>
+					Lines, quadratic and cubic Béziers and SVG arcs in; curves out, never
+					flattened.
+				</li>
+				<li>
+					Miter, bevel and round joins with a miter limit; butt, square and round
+					caps.
+				</li>
+				<li>Dash patterns with an offset; zero-length dashes draw dots.</li>
+				<li>
+					Inside and outside strokes, relative to the whole shape's fill, holes
+					included.
+				</li>
+				<li>
+					<code>clipToShape</code> turns strokes wider than the shape, or overlapping
+					each other, into clean outlines.
+				</li>
+				<li>SVG path data in and out, with parse errors reported.</li>
+				<li>Same results at any scale.</li>
+			</ul>
+
+			<h2>JavaScript</h2>
+			<pre><code class="language-sh">npm install stroke-outline</code></pre>
+			<pre><code class="language-ts">import { init } from 'stroke-outline';
+
+const so = await init(); // loads the WebAssembly module; do it once
+
+// stroke SVG path data; the outline is a Path
+const outline = so.buildOutline('M 10 10 H 90 A 20 20 0 0 1 90 50', { lineWidth: 8, lineCap: 'round' });
+ctx.fill(new Path2D(outline.toSVG()));
+outline.commands; // [{ type: 'moveTo', x, y }, { type: 'cubicTo', ... }, ...] for WebGL, hit testing...
+outline.error; // null, or { message: 'expected a number at position 11' } for malformed data
+
+// parse SVG once, then stroke it as often as you like
+const icon = so.pathFromSVG('M 0 0 H 100 V 100 H 0 Z M 30 30 V 70 H 70 V 30 Z');
+const thin = so.buildOutline(icon, { lineWidth: 2 });
+const thick = so.buildOutline(icon, { lineWidth: 12, align: 'inside' });
+thinEl.setAttribute('d', thin.toSVG());
+thickEl.setAttribute('d', thick.toSVG());
+
+// or build the path in code
+const path = new so.Path().moveTo(0, 0).lineTo(100, 0).quadTo(150, 50, 100, 100);
+const dashed = so.buildOutline(path, { lineWidth: 6, dash: [12, 6] });
+ctx.fill(new Path2D(dashed.toSVG())); // each dash is its own subpath</code></pre>
+			<p>
+				The package isn't on npm yet; build it from source (see the
+				<a href="https://github.com/yyyk/stroke-outline#readme">README</a>).
+			</p>
+
+			<h2>C++</h2>
+			<pre><code class="language-cmake">find_package(stroke_outline 0.1 REQUIRED)
+target_link_libraries(app PRIVATE stroke_outline::stroke_outline)</code></pre>
+			<pre><code class="language-cpp">#include "stroke_outline/stroke_outline.hpp"
+using namespace stroke_outline;
+
+StrokeSettings settings;
+settings.line_width = 8.0;
+settings.line_cap = LineCap::Round;
+
+// stroke SVG path data; the outline is a Path
+std::optional&lt;SvgParseError&gt; error; // optional: malformed data is stroked up to the error
+Path outline = build_outline("M 10 10 H 90 A 20 20 0 0 1 90 50", settings, error);
+std::string d = outline.to_svg();
+outline.for_each({ .move_to = [](double x, double y) { /* ... */ }, /* line_to, cubic_to... */ });
+if (error) std::cerr &lt;&lt; error-&gt;message; // e.g. "expected a number at position 11"
+
+// parse SVG once, then stroke it as often as you like
+Path icon = Path::from_svg("M 0 0 H 100 V 100 H 0 Z M 30 30 V 70 H 70 V 30 Z");
+Path thin = build_outline(icon, { .line_width = 2.0 });
+Path thick = build_outline(icon, { .line_width = 12.0, .align = StrokeAlign::Inside });
+
+// or build the path in code
+Path path = Path {}.move_to(0, 0).line_to(100, 0).quad_to(150, 50, 100, 100);
+settings.dash = DashSettings { { 12.0, 6.0 } };
+Path dashed = build_outline(path, settings);</code></pre>
+
+			<h2>Options</h2>
+			<p>
+				All optional. In C++ they are <code>StrokeSettings</code> fields in snake_case.
+			</p>
+			<table>
+				<tr>
+					<th>Option</th>
+					<th>Default</th>
+					<th></th>
+				</tr>
+				<tr>
+					<td><code>lineWidth</code></td>
+					<td><code>1</code></td>
+					<td>Must be positive and finite, otherwise nothing is stroked.</td>
+				</tr>
+				<tr>
+					<td><code>lineJoin</code></td>
+					<td><code>'miter'</code></td>
+					<td><code>'miter'</code>, <code>'bevel'</code>, <code>'round'</code></td>
+				</tr>
+				<tr>
+					<td><code>lineCap</code></td>
+					<td><code>'butt'</code></td>
+					<td><code>'butt'</code>, <code>'square'</code>, <code>'round'</code></td>
+				</tr>
+				<tr>
+					<td><code>miterLimit</code></td>
+					<td><code>4</code></td>
+					<td>
+						Longest miter, as a multiple of the width; sharper corners are beveled.
+					</td>
+				</tr>
+				<tr>
+					<td><code>align</code></td>
+					<td><code>'center'</code></td>
+					<td>
+						<code>'center'</code>, <code>'inside'</code>, <code>'outside'</code>.
+						Applies to closed subpaths.
+					</td>
+				</tr>
+				<tr>
+					<td><code>fillRule</code></td>
+					<td><code>'nonzero'</code></td>
+					<td>
+						<code>'nonzero'</code>, <code>'evenodd'</code>: how the shape is filled,
+						which decides inside and outside.
+					</td>
+				</tr>
+				<tr>
+					<td><code>clipToShape</code></td>
+					<td><code>false</code></td>
+					<td>Resolve overlaps into simple contours. Slower, so off by default.</td>
+				</tr>
+				<tr>
+					<td><code>dash</code>, <code>dashOffset</code></td>
+					<td>none, <code>0</code></td>
+					<td>
+						For example <code>[10, 5]</code>. <code>[0, 10]</code> with round caps
+						draws dots.
+					</td>
+				</tr>
+			</table>
+			<p class="note">
+				Fill outlines with the <strong>nonzero</strong> rule (the default for canvas and
+				SVG): they can overlap themselves. With <code>clipToShape</code>, closed shapes
+				come out as simple contours that fill the same under even-odd.
+			</p>
+
+			<footer>
+				<a href="https://github.com/yyyk/stroke-outline">GitHub</a> · MIT License · ©
+				2026 Yuki Kishino
+			</footer>
+		</main>
+	</body>
+</html>

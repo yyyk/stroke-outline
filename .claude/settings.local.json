@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat src/stroke/clip.hpp src/stroke/clip.cpp)",
+      "Bash(grep -n \"clip\" src/stroke_outline.cpp)"
+    ]
+  }
+}

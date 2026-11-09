@@ -1,0 +1,6 @@
+@PACKAGE_INIT@
+
+# Imports stroke_outline::stroke_outline (no external dependencies).
+include("${CMAKE_CURRENT_LIST_DIR}/stroke_outlineTargets.cmake")
+
+check_required_components(stroke_outline)

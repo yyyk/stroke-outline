@@ -1,0 +1,54 @@
+{
+  "name": "stroke-outline",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Stroke vector paths into fillable outlines: joins, caps, dashes, inside/outside alignment and clipping. WebAssembly build of a C++ library.",
+  "keywords": [
+    "stroke",
+    "outline",
+    "path",
+    "svg",
+    "vector",
+    "bezier",
+    "dash",
+    "canvas",
+    "geometry",
+    "wasm",
+    "webassembly"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yyyk/stroke-outline.git",
+    "directory": "js"
+  },
+  "homepage": "https://github.com/yyyk/stroke-outline#readme",
+  "bugs": "https://github.com/yyyk/stroke-outline/issues",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node scripts/copy-wasm.mjs",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}

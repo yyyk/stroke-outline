@@ -1,0 +1,4 @@
+node_modules/
+dist/
+# WASM module published by the cmake build
+src/wasm/
