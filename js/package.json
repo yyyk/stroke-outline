@@ -21,7 +21,7 @@
     "url": "git+https://github.com/yyyk/stroke-outline.git",
     "directory": "js"
   },
-  "homepage": "https://github.com/yyyk/stroke-outline#readme",
+  "homepage": "https://yyyk.github.io/stroke-outline/",
   "bugs": "https://github.com/yyyk/stroke-outline/issues",
   "type": "module",
   "main": "./dist/index.js",
