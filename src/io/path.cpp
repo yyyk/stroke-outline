@@ -106,7 +106,12 @@ namespace stroke_outline
 		const auto cubics =
 			svg::arc_to_cubics(from, rx, ry, x_axis_rotation_deg, large_arc, sweep, { x, y });
 		if (cubics.empty())
-			line_to(x, y);  // degenerate arc -> straight line
+		{
+			// Degenerate arc: a straight line, or nothing when the end is the
+			// current point (as the SVG parser does; SVG spec F.6.2).
+			if (x != from.x || y != from.y)
+				line_to(x, y);
+		}
 		else
 			for (const auto& c: cubics)
 				cubic_to(

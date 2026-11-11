@@ -60,6 +60,15 @@ TEST_CASE("Path::arc_to expands an arc to cubics")
 	CHECK(last_y == doctest::Approx(50.0).epsilon(0.01));
 }
 
+TEST_CASE("Path::arc_to: a degenerate arc is a line, or nothing at the current point")
+{
+	// Zero radius: a straight line (SVG spec F.6.2).
+	CHECK(Path {}.move_to(0, 0).arc_to(0, 0, 0, false, true, 10, 0).to_svg() == "M 0 0 L 10 0");
+	// Ending where it starts: omitted entirely, as the SVG parser does.
+	CHECK(Path {}.move_to(5, 5).arc_to(20, 20, 0, false, true, 5, 5).to_svg() == "M 5 5");
+	CHECK(Path::from_svg("M 5 5 A 20 20 0 0 1 5 5").to_svg() == "M 5 5");
+}
+
 TEST_CASE("build_outline returns a closed outline")
 {
 	const Path outline = build_outline(

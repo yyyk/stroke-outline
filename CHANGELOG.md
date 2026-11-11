@@ -5,6 +5,14 @@ All notable changes to this project are documented here. The format follows
 [Semantic Versioning](https://semver.org/) (while the version is 0.x, minor
 versions may change the API).
 
+## [0.1.3] - 2026-11-11
+
+### Fixed
+
+- `Path.arcTo` (and C++ `Path::arc_to`) no longer adds a zero-length line when
+  the arc ends where it starts; like an SVG `A` command with identical end
+  points, it now adds nothing (SVG spec F.6.2).
+
 ## [0.1.2] - 2026-11-09
 
 ### Fixed
@@ -75,4 +83,7 @@ WebAssembly.
 - TypeScript types included. The WebAssembly binary is embedded, so it works
   in browsers, workers and Node 20+ with no bundler setup.
 
+[0.1.3]: https://github.com/yyyk/stroke-outline/releases/tag/v0.1.3
+[0.1.2]: https://github.com/yyyk/stroke-outline/releases/tag/v0.1.2
+[0.1.1]: https://github.com/yyyk/stroke-outline/releases/tag/v0.1.1
 [0.1.0]: https://github.com/yyyk/stroke-outline/releases/tag/v0.1.0
