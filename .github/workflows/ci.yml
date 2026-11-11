@@ -25,7 +25,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Install Ninja
-        run: ${{ runner.os == 'Linux' && 'sudo apt-get install -y ninja-build' || 'brew install ninja' }}
+        run: ${{ runner.os == 'Linux' && 'sudo apt-get update && sudo apt-get install -y ninja-build' || 'brew install ninja' }}
       - run: cmake --preset native
       - run: cmake --build --preset native-release
       - run: ctest --preset native-release
@@ -37,7 +37,7 @@ jobs:
       UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
     steps:
       - uses: actions/checkout@v7
-      - run: sudo apt-get install -y ninja-build
+      - run: sudo apt-get update && sudo apt-get install -y ninja-build
       - name: Configure
         run: >
           cmake -S . -B build/sanitize -G Ninja
@@ -67,7 +67,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
-      - run: sudo apt-get install -y ninja-build
+      - run: sudo apt-get update && sudo apt-get install -y ninja-build
       - uses: mymindstorm/setup-emsdk@v14
         with:
           version: 6.0.13

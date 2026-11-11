@@ -62,7 +62,7 @@ jobs:
           ' CHANGELOG.md > release-notes.md
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
-      - run: sudo apt-get install -y ninja-build
+      - run: sudo apt-get update && sudo apt-get install -y ninja-build
       - uses: mymindstorm/setup-emsdk@v14
         with:
           version: 6.0.13
