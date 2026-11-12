@@ -45,8 +45,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json && node scripts/copy-wasm.mjs",
     "test": "npm run build && node --test test/*.test.mjs",
-    "format": "prettier --config .prettierrc.json --write \"**/*.{ts,mjs,json,md}\" ../README.md ../CHANGELOG.md",
-    "format:check": "prettier --config .prettierrc.json --check \"**/*.{ts,mjs,json,md}\" ../README.md ../CHANGELOG.md",
+    "format": "prettier --ignore-path ../.prettierignore --write \"**/*.{ts,mjs,json,md}\" ../README.md ../CHANGELOG.md",
+    "format:check": "prettier --ignore-path ../.prettierignore --check \"**/*.{ts,mjs,json,md}\" ../README.md ../CHANGELOG.md",
     "prepack": "npm run build"
   },
   "devDependencies": {
