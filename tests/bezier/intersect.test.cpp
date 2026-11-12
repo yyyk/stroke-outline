@@ -100,15 +100,3 @@ TEST_CASE("identical curves are coincident, not intersecting")
 	CHECK(quadratic_quadratic_intersections(kArchQ, kArchQ).empty());
 	CHECK(cubic_cubic_intersections(kArchC, kArchC).empty());
 }
-
-TEST_CASE("cubic_self_intersection finds a loop's crossing point")
-{
-	// The controls cross over, so x runs right, back left and right again.
-	const CubicBezier loop { { 0, 0 }, { 200, 100 }, { -100, 100 }, { 100, 0 } };
-	const auto hit = cubic_self_intersection(loop);
-	REQUIRE(hit);
-	CHECK(std::abs(hit->t1 - hit->t2) > 0.1);
-	CHECK((at(loop, hit->t1) - at(loop, hit->t2)).length() < 1e-3);
-
-	CHECK(!cubic_self_intersection(kArchC));
-}

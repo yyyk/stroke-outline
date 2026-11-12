@@ -1,3 +1,5 @@
+// Based on bezierjs's Bezier.length and utils.length, Copyright (c) 2023 Pomax
+// (MIT license); see THIRD_PARTY_NOTICES.
 #include <array>
 #include "bezier/bezier.hpp"
 

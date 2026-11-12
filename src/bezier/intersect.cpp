@@ -141,6 +141,7 @@ namespace
 
 	const unsigned int MAX_DEPTH = 50;
 
+	// Partial overlaps and tangent contacts aren't handled; see intersect.hpp.
 	void curve_curve_recursive(
 		const CurveSeg& a,
 		const CurveSeg& b,
@@ -342,40 +343,5 @@ namespace stroke_outline::bezier
 		curve_curve_recursive(a, b, 0, intersections);
 		dedup_intersections(intersections, EPSILON.param * 10.0);
 		return intersections;
-	}
-
-	std::optional<CurveIntersection> cubic_self_intersection(const CubicBezier& curve)
-	{
-		auto [left, right] = split_cubic_bezier(curve.p0, curve.p1, curve.p2, curve.p3, 0.5);
-		CurveSeg a {
-			.is_cubic = true,
-			.p0 = left.p0,
-			.p1 = left.p1,
-			.p2 = left.p2,
-			.p3 = left.p3,
-			.t0 = 0.0,
-			.t1 = 0.5
-		};
-		CurveSeg b {
-			.is_cubic = true,
-			.p0 = right.p0,
-			.p1 = right.p1,
-			.p2 = right.p2,
-			.p3 = right.p3,
-			.t0 = 0.5,
-			.t1 = 1.0
-		};
-		std::vector<CurveIntersection> intersections;
-		curve_curve_recursive(a, b, 0, intersections);
-		dedup_intersections(intersections, EPSILON.param * 10.0);
-		for (const auto& intersection: intersections)
-		{
-			// Skip the shared split point
-			if (std::abs(intersection.t1 - 0.5) < EPSILON.point
-				&& std::abs(intersection.t2 - 0.5) < EPSILON.point)
-				continue;
-			return intersection;
-		}
-		return std::nullopt;
 	}
 }

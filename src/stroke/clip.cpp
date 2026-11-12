@@ -472,13 +472,6 @@ namespace stroke_outline
 				add_split(a, h.t1, h.point);
 				add_split(b, h.t2, h.point);
 			}
-		for (std::size_t a = 0; a < edges.size(); ++a)
-			if (edges[a].kind == Edge::Kind::Cubic)
-				if (const auto h = cubic_self_intersection(as_cubic(edges[a])))
-				{
-					add_split(a, h->t1, h->point);
-					add_split(a, h->t2, h->point);
-				}
 		// line_segment_intersection ignores parallel segments, so collinear
 		// overlaps are found separately: an endpoint of one edge lying on a
 		// line's interior splits that line.

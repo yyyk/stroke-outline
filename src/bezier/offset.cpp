@@ -1,3 +1,5 @@
+// Offsetting based on bezierjs's Bezier.simple, utils.angle, Bezier.scale and
+// Bezier.reduce, Copyright (c) 2023 Pomax (MIT license); see THIRD_PARTY_NOTICES.
 #include <optional>
 #include <numbers>
 #include <cmath>

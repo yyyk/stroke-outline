@@ -94,4 +94,4 @@ npm pack        # the tarball that would be published
 ## License
 
 MIT — see `LICENSE`. Includes code ported from svg-arc-to-cubic-bezier
-(Colin Meinke, ISC license); see `THIRD_PARTY_NOTICES`.
+(Colin Meinke, ISC license) and based on bezierjs (Pomax, MIT license); see`THIRD_PARTY_NOTICES`.
