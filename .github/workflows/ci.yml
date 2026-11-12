@@ -86,6 +86,9 @@ jobs:
       - name: npm package — build and test
         working-directory: js
         run: npm ci && npm test
+      - name: npm package and Markdown — format check
+        working-directory: js
+        run: npm run format:check
       - name: npm package — test on the oldest supported Node versions too
         working-directory: js
         run: |

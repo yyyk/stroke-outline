@@ -8,13 +8,16 @@ and Node.
 ```js
 import { init } from 'stroke-outline';
 
-const so = await init();  // loads the WASM once; reuse the result
+const so = await init(); // loads the WASM once; reuse the result
 
 // stroke SVG path data
-const outline = so.buildOutline('M 10 10 H 90 A 20 20 0 0 1 90 50', { lineWidth: 8, lineCap: 'round' });
-outline.toSVG();    // SVG path data — <path d>, new Path2D(...), a file
-outline.commands;   // [{ type: 'moveTo', x, y }, { type: 'cubicTo', c1x, ... }, ...]
-outline.error;      // null, or { message } if the SVG data was malformed
+const outline = so.buildOutline('M 10 10 H 90 A 20 20 0 0 1 90 50', {
+  lineWidth: 8,
+  lineCap: 'round',
+});
+outline.toSVG(); // SVG path data — <path d>, new Path2D(...), a file
+outline.commands; // [{ type: 'moveTo', x, y }, { type: 'cubicTo', c1x, ... }, ...]
+outline.error; // null, or { message } if the SVG data was malformed
 
 // parse SVG once, then stroke it as often as you like
 const icon = so.pathFromSVG('M 0 0 H 100 V 100 H 0 Z M 30 30 V 70 H 70 V 30 Z');
@@ -60,17 +63,17 @@ Nothing needs freeing: the wrapper releases every WASM-side object itself.
 
 All optional; omitted ones take these defaults.
 
-| Option | Default | |
-| --- | --- | --- |
-| `lineWidth` | `1` | must be a positive finite number, else nothing is stroked |
-| `lineJoin` | `'miter'` | `'miter'`, `'bevel'`, `'round'` |
-| `lineCap` | `'butt'` | `'butt'`, `'square'`, `'round'` |
-| `miterLimit` | `4` | below 1 behaves as 1 (always bevel) |
-| `align` | `'center'` | `'center'`, `'inside'`, `'outside'` — closed subpaths, relative to the whole fill (holes included) |
-| `fillRule` | `'nonzero'` | `'nonzero'`, `'evenodd'` — how subpaths form the fill, for `align` and `clipToShape` |
-| `clipToShape` | `false` | resolve over-wide or overlapping strokes into simple contours |
-| `dash` | none | e.g. `[10, 5]`; `[0, gap]` with round caps draws dots |
-| `dashOffset` | `0` | |
+| Option        | Default     |                                                                                                    |
+| ------------- | ----------- | -------------------------------------------------------------------------------------------------- |
+| `lineWidth`   | `1`         | must be a positive finite number, else nothing is stroked                                          |
+| `lineJoin`    | `'miter'`   | `'miter'`, `'bevel'`, `'round'`                                                                    |
+| `lineCap`     | `'butt'`    | `'butt'`, `'square'`, `'round'`                                                                    |
+| `miterLimit`  | `4`         | below 1 behaves as 1 (always bevel)                                                                |
+| `align`       | `'center'`  | `'center'`, `'inside'`, `'outside'` — closed subpaths, relative to the whole fill (holes included) |
+| `fillRule`    | `'nonzero'` | `'nonzero'`, `'evenodd'` — how subpaths form the fill, for `align` and `clipToShape`               |
+| `clipToShape` | `false`     | resolve over-wide or overlapping strokes into simple contours                                      |
+| `dash`        | none        | e.g. `[10, 5]`; `[0, gap]` with round caps draws dots                                              |
+| `dashOffset`  | `0`         |                                                                                                    |
 
 An unknown option value (e.g. `lineJoin: 'rounded'`) throws a `TypeError`.
 

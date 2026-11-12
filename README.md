@@ -199,7 +199,9 @@ memory management.
 ```js
 import { init } from 'stroke-outline';
 const so = await init();
-const d = so.buildOutline('M 10 10 H 90 A 20 20 0 0 1 90 50', { lineWidth: 8, lineCap: 'round' }).toSVG();
+const d = so
+  .buildOutline('M 10 10 H 90 A 20 20 0 0 1 90 50', { lineWidth: 8, lineCap: 'round' })
+  .toSVG();
 ```
 
 Build it with the WASM module (`cmake --preset wasm && cmake --build --preset
@@ -214,20 +216,20 @@ The npm package is built on the WASM module's own exports: `buildStrokeOutline`,
 complete one); enums are passed as `Module.<Enum>.<Value>`.
 
 ```ts
-import createModule from "./stroke_outline.js";
+import createModule from './stroke_outline.js';
 
 const Module = await createModule();
 
 const settings = {
-	lineWidth: 8,
-	lineJoin: Module.LineJoin.Round,
-	lineCap: Module.LineCap.Round,
-	miterLimit: 4,
-	align: Module.StrokeAlign.Center,
-	fillRule: Module.FillRule.NonZero, // how subpaths combine, for inside/outside
-	clipToShape: false,
-	dashPattern: [], // e.g. [20, 10]
-	dashOffset: 0,
+  lineWidth: 8,
+  lineJoin: Module.LineJoin.Round,
+  lineCap: Module.LineCap.Round,
+  miterLimit: 4,
+  align: Module.StrokeAlign.Center,
+  fillRule: Module.FillRule.NonZero, // how subpaths combine, for inside/outside
+  clipToShape: false,
+  dashPattern: [], // e.g. [20, 10]
+  dashOffset: 0,
 };
 
 // Commands are vectors of { verb, ctrl1, ctrl2, to }; unused control points
@@ -241,7 +243,7 @@ input.push_back({ verb: Module.Verb.LineTo, ctrl1: Z, ctrl2: Z, to: { x: 90, y: 
 const outline = Module.buildStrokeOutline(input, settings);
 const d = Module.pathToSvg(outline, 3); // SVG path data, at least 3 decimals
 for (let i = 0; i < outline.size(); i++) {
-	const cmd = outline.get(i)!; // cmd.verb.value === Module.Verb.CubicTo.value, ...
+  const cmd = outline.get(i)!; // cmd.verb.value === Module.Verb.CubicTo.value, ...
 }
 
 // Embind vectors are C++ objects and are not garbage-collected.
@@ -251,18 +253,22 @@ outline.delete();
 
 ## Formatting
 
-C++ is formatted with **clang-format** (`.clang-format`); the web sandbox with
-**Prettier**.
+C++ is formatted with **clang-format** (`.clang-format`, version 21.1.8:
+`pip install clang-format==21.1.8`); the npm package (`js/`), the Markdown files,
+the docs site and the web sandbox with **Prettier**. CI checks all of them but
+doesn't rewrite anything.
 
 ```sh
 # C++ (whole tree)
 cmake --build build/native --target format         # rewrite in place
 cmake --build build/native --target format-check   # fail if unformatted (CI)
 
-# TypeScript / HTML (sandbox)
-cd sandbox/web
+# js/ and the Markdown (README.md, CHANGELOG.md, js/README.md)
+cd js
 npm run format         # rewrite
 npm run format:check   # CI
+
+# The docs site and the web sandbox: the same, in site/ and sandbox/web/
 ```
 
 ## Releasing
@@ -282,4 +288,8 @@ stored anywhere.
 
 MIT — see [`LICENSE`](LICENSE). The SVG arc conversion
 (`src/io/svg_arc.cpp`) is ported from svg-arc-to-cubic-bezier by Colin Meinke,
-under the ISC license, and the arc length and curve offsetting(`src/bezier/arc_length.cpp`, `src/bezier/offset.cpp`) are based on bezierjs by Pomax, under the MIT license; their notices are in [`THIRD_PARTY_NOTICES`](THIRD_PARTY_NOTICES) and ship with the CMake install and the npm package.
+under the ISC license, and the arc length and curve offsetting
+(`src/bezier/arc_length.cpp`, `src/bezier/offset.cpp`) are based on bezierjs by
+Pomax, under the MIT license; their notices are in
+[`THIRD_PARTY_NOTICES`](THIRD_PARTY_NOTICES) and ship with the CMake install and
+the npm package.

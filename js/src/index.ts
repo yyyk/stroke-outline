@@ -7,18 +7,18 @@
 //
 // Options are partial: anything omitted takes the C++ default. Nothing here
 // needs freeing; the wrapper releases every WASM-side object itself.
-import createModule from "./wasm/stroke_outline.js";
+import createModule from './wasm/stroke_outline.js';
 import type {
 	MainModule,
 	PathCommand as WasmCommand,
 	PathCommandVector,
 	StrokeSettings as WasmSettings,
-} from "./wasm/stroke_outline.js";
+} from './wasm/stroke_outline.js';
 
-export type LineJoin = "miter" | "bevel" | "round";
-export type LineCap = "butt" | "square" | "round";
-export type StrokeAlign = "center" | "inside" | "outside";
-export type FillRule = "nonzero" | "evenodd";
+export type LineJoin = 'miter' | 'bevel' | 'round';
+export type LineCap = 'butt' | 'square' | 'round';
+export type StrokeAlign = 'center' | 'inside' | 'outside';
+export type FillRule = 'nonzero' | 'evenodd';
 
 export interface StrokeOptions {
 	/** Stroke width; must be a positive finite number. Default 1. */
@@ -43,11 +43,11 @@ export interface StrokeOptions {
 
 /** One path command; coordinates are absolute. */
 export type PathCommand =
-	| { type: "moveTo"; x: number; y: number }
-	| { type: "lineTo"; x: number; y: number }
-	| { type: "quadTo"; cx: number; cy: number; x: number; y: number }
+	| { type: 'moveTo'; x: number; y: number }
+	| { type: 'lineTo'; x: number; y: number }
+	| { type: 'quadTo'; cx: number; cy: number; x: number; y: number }
 	| {
-			type: "cubicTo";
+			type: 'cubicTo';
 			c1x: number;
 			c1y: number;
 			c2x: number;
@@ -55,7 +55,7 @@ export type PathCommand =
 			x: number;
 			y: number;
 	  }
-	| { type: "close" };
+	| { type: 'close' };
 
 /** Why SVG path data stopped parsing. */
 export interface SvgError {
@@ -71,14 +71,7 @@ export interface Path {
 	moveTo(x: number, y: number): Path;
 	lineTo(x: number, y: number): Path;
 	quadTo(cx: number, cy: number, x: number, y: number): Path;
-	cubicTo(
-		c1x: number,
-		c1y: number,
-		c2x: number,
-		c2y: number,
-		x: number,
-		y: number,
-	): Path;
+	cubicTo(c1x: number, c1y: number, c2x: number, c2y: number, x: number, y: number): Path;
 	/** SVG elliptical arc to (x, y), expanded to cubics. */
 	arcTo(
 		rx: number,
@@ -167,11 +160,11 @@ function createApi(module: MainModule): StrokeOutline {
 		const d = module.defaultStrokeSettings();
 		return {
 			lineWidth: options.lineWidth ?? d.lineWidth,
-			lineJoin: pick(joins, options.lineJoin, "lineJoin", d.lineJoin),
-			lineCap: pick(caps, options.lineCap, "lineCap", d.lineCap),
+			lineJoin: pick(joins, options.lineJoin, 'lineJoin', d.lineJoin),
+			lineCap: pick(caps, options.lineCap, 'lineCap', d.lineCap),
 			miterLimit: options.miterLimit ?? d.miterLimit,
-			align: pick(aligns, options.align, "align", d.align),
-			fillRule: pick(fillRules, options.fillRule, "fillRule", d.fillRule),
+			align: pick(aligns, options.align, 'align', d.align),
+			fillRule: pick(fillRules, options.fillRule, 'fillRule', d.fillRule),
 			clipToShape: options.clipToShape ?? d.clipToShape,
 			dashPattern: options.dash ?? d.dashPattern,
 			dashOffset: options.dashOffset ?? d.dashOffset,
@@ -183,7 +176,7 @@ function createApi(module: MainModule): StrokeOutline {
 		for (const c of commands) {
 			let command: WasmCommand;
 			switch (c.type) {
-				case "moveTo":
+				case 'moveTo':
 					command = {
 						verb: module.Verb.MoveTo,
 						ctrl1: ZERO,
@@ -191,7 +184,7 @@ function createApi(module: MainModule): StrokeOutline {
 						to: { x: c.x, y: c.y },
 					};
 					break;
-				case "lineTo":
+				case 'lineTo':
 					command = {
 						verb: module.Verb.LineTo,
 						ctrl1: ZERO,
@@ -199,7 +192,7 @@ function createApi(module: MainModule): StrokeOutline {
 						to: { x: c.x, y: c.y },
 					};
 					break;
-				case "quadTo":
+				case 'quadTo':
 					command = {
 						verb: module.Verb.QuadraticTo,
 						ctrl1: { x: c.cx, y: c.cy },
@@ -207,7 +200,7 @@ function createApi(module: MainModule): StrokeOutline {
 						to: { x: c.x, y: c.y },
 					};
 					break;
-				case "cubicTo":
+				case 'cubicTo':
 					command = {
 						verb: module.Verb.CubicTo,
 						ctrl1: { x: c.c1x, y: c.c1y },
@@ -215,7 +208,7 @@ function createApi(module: MainModule): StrokeOutline {
 						to: { x: c.x, y: c.y },
 					};
 					break;
-				case "close":
+				case 'close':
 					command = {
 						verb: module.Verb.Close,
 						ctrl1: ZERO,
@@ -237,14 +230,14 @@ function createApi(module: MainModule): StrokeOutline {
 				const c = vec.get(i)!;
 				switch (c.verb.value) {
 					case module.Verb.MoveTo.value:
-						out.push({ type: "moveTo", x: c.to.x, y: c.to.y });
+						out.push({ type: 'moveTo', x: c.to.x, y: c.to.y });
 						break;
 					case module.Verb.LineTo.value:
-						out.push({ type: "lineTo", x: c.to.x, y: c.to.y });
+						out.push({ type: 'lineTo', x: c.to.x, y: c.to.y });
 						break;
 					case module.Verb.QuadraticTo.value:
 						out.push({
-							type: "quadTo",
+							type: 'quadTo',
 							cx: c.ctrl1.x,
 							cy: c.ctrl1.y,
 							x: c.to.x,
@@ -253,7 +246,7 @@ function createApi(module: MainModule): StrokeOutline {
 						break;
 					case module.Verb.CubicTo.value:
 						out.push({
-							type: "cubicTo",
+							type: 'cubicTo',
 							c1x: c.ctrl1.x,
 							c1y: c.ctrl1.y,
 							c2x: c.ctrl2.x,
@@ -263,7 +256,7 @@ function createApi(module: MainModule): StrokeOutline {
 						});
 						break;
 					case module.Verb.Close.value:
-						out.push({ type: "close" });
+						out.push({ type: 'close' });
 						break;
 				}
 			}
@@ -295,23 +288,20 @@ function createApi(module: MainModule): StrokeOutline {
 
 		readonly error: SvgError | null;
 
-		constructor(
-			commands: readonly PathCommand[] = [],
-			error: SvgError | null = null,
-		) {
+		constructor(commands: readonly PathCommand[] = [], error: SvgError | null = null) {
 			for (const c of commands) this.push(c);
 			this.error = error;
 		}
 
 		private push(c: PathCommand): this {
 			this.list.push(c);
-			if (c.type === "close") {
+			if (c.type === 'close') {
 				this.x = this.startX;
 				this.y = this.startY;
 			} else {
 				this.x = c.x;
 				this.y = c.y;
-				if (c.type === "moveTo") {
+				if (c.type === 'moveTo') {
 					this.startX = c.x;
 					this.startY = c.y;
 				}
@@ -324,23 +314,16 @@ function createApi(module: MainModule): StrokeOutline {
 		}
 
 		moveTo(x: number, y: number) {
-			return this.push({ type: "moveTo", x, y });
+			return this.push({ type: 'moveTo', x, y });
 		}
 		lineTo(x: number, y: number) {
-			return this.push({ type: "lineTo", x, y });
+			return this.push({ type: 'lineTo', x, y });
 		}
 		quadTo(cx: number, cy: number, x: number, y: number) {
-			return this.push({ type: "quadTo", cx, cy, x, y });
+			return this.push({ type: 'quadTo', cx, cy, x, y });
 		}
-		cubicTo(
-			c1x: number,
-			c1y: number,
-			c2x: number,
-			c2y: number,
-			x: number,
-			y: number,
-		) {
-			return this.push({ type: "cubicTo", c1x, c1y, c2x, c2y, x, y });
+		cubicTo(c1x: number, c1y: number, c2x: number, c2y: number, x: number, y: number) {
+			return this.push({ type: 'cubicTo', c1x, c1y, c2x, c2y, x, y });
 		}
 		arcTo(
 			rx: number,
@@ -354,43 +337,31 @@ function createApi(module: MainModule): StrokeOutline {
 			// From the current point. A degenerate arc comes back as a straight line,
 			// or nothing when (x, y) is the current point.
 			for (const c of fromWasm(
-				module.arcToCommands(
-					this.x,
-					this.y,
-					rx,
-					ry,
-					rotation,
-					largeArc,
-					sweep,
-					x,
-					y,
-				),
+				module.arcToCommands(this.x, this.y, rx, ry, rotation, largeArc, sweep, x, y),
 			))
 				this.push(c);
 			return this;
 		}
 		close() {
-			return this.push({ type: "close" });
+			return this.push({ type: 'close' });
 		}
 		toSVG(precision = 3) {
-			return withWasm(this.list, (vec) => module.pathToSvg(vec, precision));
+			return withWasm(this.list, vec => module.pathToSvg(vec, precision));
 		}
 	}
 
 	return {
 		Path: PathImpl,
-		pathFromSVG: (d) => {
+		pathFromSVG: d => {
 			const parsed = module.parseSvgPathChecked(d);
 			const error = parsed.ok ? null : { message: String(parsed.message) };
 			return new PathImpl(fromWasm(parsed.commands), error);
 		},
 		buildOutline: (path, options) => {
 			const s = settings(options);
-			if (typeof path !== "string")
+			if (typeof path !== 'string')
 				return new PathImpl(
-					withWasm(path.commands, (vec) =>
-						fromWasm(module.buildStrokeOutline(vec, s)),
-					),
+					withWasm(path.commands, vec => fromWasm(module.buildStrokeOutline(vec, s))),
 				);
 			// SVG data: stroke the parsed commands where they are, in WASM memory.
 			const parsed = module.parseSvgPathChecked(path);

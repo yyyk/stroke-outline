@@ -1,0 +1,16 @@
+# Prettier formats only what CI checks: js/, the Markdown, site/ and
+# sandbox/web/ (each of those two with its own config and ignore file).
+
+# Generated: build output, packages, and the WebAssembly module CMake publishes.
+node_modules/
+build/
+bin/
+js/dist/
+js/src/wasm/
+site/dist/
+sandbox/web/dist/
+
+# Not format-checked by CI.
+.github/
+.vscode/
+CMakePresets.json
