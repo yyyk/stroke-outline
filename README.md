@@ -282,4 +282,4 @@ stored anywhere.
 
 MIT — see [`LICENSE`](LICENSE). The SVG arc conversion
 (`src/io/svg_arc.cpp`) is ported from svg-arc-to-cubic-bezier by Colin Meinke,
-under the ISC license, and the arc length and curve offsetting(`src/bezier/arc_length.cpp`, `src/bezier/offset.cpp`) are based on bezierjs byPomax, under the MIT license; their notices are in [`THIRD_PARTY_NOTICES`](THIRD_PARTY_NOTICES) and ship with the CMake install andthe npm package.
+under the ISC license, and the arc length and curve offsetting(`src/bezier/arc_length.cpp`, `src/bezier/offset.cpp`) are based on bezierjs by Pomax, under the MIT license; their notices are in [`THIRD_PARTY_NOTICES`](THIRD_PARTY_NOTICES) and ship with the CMake install and the npm package.
