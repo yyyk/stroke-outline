@@ -5,6 +5,22 @@ All notable changes to this project are documented here. The format follows
 [Semantic Versioning](https://semver.org/) (while the version is 0.x, minor
 versions may change the API).
 
+## [0.1.4] - 2026-11-13
+
+### Fixed
+
+- Curved outlines are now within about 0.1% of the stroke width of the exact
+  outline. Curves were offset without checking the result, so on sharply bent
+  curves the outline could be off by up to ~15% of the width.
+- Curved outlines no longer depend on the coordinate scale. A fixed threshold
+  dropped or added pieces at very small and very large sizes: at 1e-4 units,
+  outlines could be off by more than the stroke width.
+
+### Changed
+
+- Sharply bent curves get more outline segments, about twice as many, and
+  stroking them takes up to about twice as long.
+
 ## [0.1.3] - 2026-11-11
 
 ### Fixed
@@ -83,6 +99,7 @@ WebAssembly.
 - TypeScript types included. The WebAssembly binary is embedded, so it works
   in browsers, workers and Node 20+ with no bundler setup.
 
+[0.1.4]: https://github.com/yyyk/stroke-outline/releases/tag/v0.1.4
 [0.1.3]: https://github.com/yyyk/stroke-outline/releases/tag/v0.1.3
 [0.1.2]: https://github.com/yyyk/stroke-outline/releases/tag/v0.1.2
 [0.1.1]: https://github.com/yyyk/stroke-outline/releases/tag/v0.1.1

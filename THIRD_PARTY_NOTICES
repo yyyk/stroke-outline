@@ -37,7 +37,8 @@ Used in: src/bezier/arc_length.cpp (arc length by 24-point Legendre-Gauss
 quadrature: Bezier.length and utils.length, with their constants) and
 src/bezier/offset.cpp (offsetting curves: Bezier.simple, utils.angle and the
 construction of Bezier.scale; splitting at extrema as Bezier.reduce does, then
-halving instead of its 0.01 steps), adapted to C++. Also compiled into the
+halving instead of its 0.01 steps), adapted to C++. The error control and the
+splitting where the offset folds are not from bezierjs. Also compiled into the
 WebAssembly module.
 
 MIT License

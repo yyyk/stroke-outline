@@ -36,10 +36,9 @@ Features:
   behaves as 1 (always bevel).
 
 **Any size.** Results are the same at any scale — tested from strokes ~1e-5
-wide on shapes ~1e-4 across up to a million times larger. The one limit: a few
-fixed thresholds remain in the curve code, so at the very smallest of those
-sizes curved outlines are off by a few percent of the stroke width (scale the
-input up first if that matters). SVG output keeps small paths' detail:
+wide on shapes ~1e-4 across up to a million times larger. Curved outlines stay
+within about 0.1% of the stroke width of the exact outline. SVG output keeps
+small paths' detail:
 `precision` is a minimum number of decimals, raised as needed to keep rounding
 within ~1e-4 of the path's size.
 
@@ -181,7 +180,7 @@ only the same minor version is compatible.
 include(FetchContent)
 FetchContent_Declare(stroke_outline
     GIT_REPOSITORY https://github.com/yyyk/stroke-outline.git
-    GIT_TAG v0.1.3)
+    GIT_TAG v0.1.4)
 FetchContent_MakeAvailable(stroke_outline)
 target_link_libraries(app PRIVATE stroke_outline::stroke_outline)
 ```

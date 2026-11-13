@@ -1,5 +1,8 @@
 // Offsetting based on bezierjs's Bezier.simple, utils.angle, Bezier.scale and
 // Bezier.reduce, Copyright (c) 2023 Pomax (MIT license); see THIRD_PARTY_NOTICES.
+// Not from bezierjs: the error control (pieces are also halved until their
+// offset is within a tolerance of the true offset), the splitting where the
+// offset folds, and the thresholds relative to the curve's size.
 #include <optional>
 #include <numbers>
 #include <cmath>
@@ -68,39 +71,54 @@ namespace
 		return std::isfinite(t) && t > EPSILON.param && t < 1.0 - EPSILON.param;
 	}
 
-	inline bool is_tiny(Vec2 v)
+	// Shorter than 1e-6 of `size`, the size of the curve being offset, so the
+	// test is the same at any scale.
+	inline bool is_tiny(Vec2 v, double size)
 	{
-		return v.length_squared() < EPSILON.solver;
+		return v.length_squared() < EPSILON.solver * size * size;
 	}
 
-	bool is_quadratic_too_small_to_subdivide(QuadraticBezier curve)
+	// The diagonal of the control points' bounding box.
+	double curve_size(std::initializer_list<Vec2> points)
+	{
+		Vec2 lo = *points.begin();
+		Vec2 hi = lo;
+		for (const Vec2 p: points)
+		{
+			lo = { std::min(lo.x, p.x), std::min(lo.y, p.y) };
+			hi = { std::max(hi.x, p.x), std::max(hi.y, p.y) };
+		}
+		return (hi - lo).length();
+	}
+
+	bool is_quadratic_too_small_to_subdivide(QuadraticBezier curve, double size)
 	{
 		const Vec2 chord = curve.p2 - curve.p0;
 		const Vec2 d0 = curve.p1 - curve.p0;
 		const Vec2 d1 = curve.p2 - curve.p1;
-		return is_tiny(chord) || (is_tiny(d0) && is_tiny(d1));
+		return is_tiny(chord, size) || (is_tiny(d0, size) && is_tiny(d1, size));
 	}
 
-	bool is_cubic_too_small_to_subdivide(CubicBezier curve)
+	bool is_cubic_too_small_to_subdivide(CubicBezier curve, double size)
 	{
 		const Vec2 chord = curve.p3 - curve.p0;
 		const Vec2 d0 = curve.p1 - curve.p0;
 		const Vec2 d1 = curve.p3 - curve.p2;
-		return is_tiny(chord) || (is_tiny(d0) && is_tiny(d1));
+		return is_tiny(chord, size) || (is_tiny(d0, size) && is_tiny(d1, size));
 	}
 
-	bool is_quadratic_degenerate(Vec2 p0, Vec2 p1, Vec2 p2)
+	bool is_quadratic_degenerate(Vec2 p0, Vec2 p1, Vec2 p2, double size)
 	{
 		const Vec2 d0 = quadratic_bezier_derivative(p0, p1, p2, 0.0);
 		const Vec2 d1 = quadratic_bezier_derivative(p0, p1, p2, 1.0);
-		return is_tiny(p2 - p0) || (is_tiny(d0) && is_tiny(d1));
+		return is_tiny(p2 - p0, size) || (is_tiny(d0, size) && is_tiny(d1, size));
 	}
 
-	bool is_cubic_degenerate(Vec2 p0, Vec2 p1, Vec2 p2, Vec2 p3)
+	bool is_cubic_degenerate(Vec2 p0, Vec2 p1, Vec2 p2, Vec2 p3, double size)
 	{
 		const Vec2 d0 = cubic_bezier_derivative(p0, p1, p2, p3, 0.0);
 		const Vec2 d1 = cubic_bezier_derivative(p0, p1, p2, p3, 1.0);
-		return is_tiny(p3 - p0) || (is_tiny(d0) && is_tiny(d1));
+		return is_tiny(p3 - p0, size) || (is_tiny(d0, size) && is_tiny(d1, size));
 	}
 
 	// Every point of `points` lies on the line through `from` and `to` (compared
@@ -152,33 +170,153 @@ namespace
 		return curves;
 	}
 
-	template <class C, class SplitFn, class IsSafeFn, class StopFn>
-	void subdivide_until_safe(
-		C curve,
-		std::vector<C>& safe_curves,
-		SplitFn split_fn,
-		IsSafeFn is_safe_fn,
-		StopFn should_stop_fn)
+	// At most this many halvings of a piece: a bound on the work.
+	constexpr int MAX_DEPTH = 24;
+
+	// The tolerance for the offset's distance from the true offset, as a share
+	// of the offset distance: 0.2%, so 0.1% of a centered stroke's width.
+	constexpr double RELATIVE_TOLERANCE = 2e-3;
+
+	// A curve's point, first and second derivatives at t.
+	struct PointAndDerivatives
 	{
-		std::vector<C> stack = { curve };
+		Vec2 p, d1, d2;
+	};
+
+	PointAndDerivatives evaluate(const QuadraticBezier& c, double t)
+	{
+		return {
+			quadratic_bezier(c.p0, c.p1, c.p2, t),
+			quadratic_bezier_derivative(c.p0, c.p1, c.p2, t),
+			2.0 * (c.p0 - 2.0 * c.p1 + c.p2),
+		};
+	}
+
+	PointAndDerivatives evaluate(const CubicBezier& c, double t)
+	{
+		const Vec2 a = c.p0 - 2.0 * c.p1 + c.p2;
+		const Vec2 b = c.p1 - 2.0 * c.p2 + c.p3;
+		return {
+			cubic_bezier(c.p0, c.p1, c.p2, c.p3, t),
+			cubic_bezier_derivative(c.p0, c.p1, c.p2, c.p3, t),
+			6.0 * ((1.0 - t) * a + t * b),
+		};
+	}
+
+	// The largest distance from the true offset of `curve` by d, B(t) + d·N(t),
+	// to `piece`, at seven points: each true-offset point is projected onto the
+	// piece by Newton's method, starting at the same parameter.
+	template <class C>
+	double offset_error(const C& curve, const C& piece, double d)
+	{
+		double worst = 0.0;
+		for (int k = 1; k < 8; ++k)
+		{
+			const double u = k / 8.0;
+			const PointAndDerivatives b = evaluate(curve, u);
+			const double speed = b.d1.length();
+			if (!(speed > 0.0))
+				continue;
+			const Vec2 target = b.p + d * Vec2 { -b.d1.y, b.d1.x } / speed;
+			double s = u;
+			for (int step = 0; step < 4; ++step)
+			{
+				const PointAndDerivatives q = evaluate(piece, s);
+				const Vec2 e = q.p - target;
+				const double f = e.dot(q.d1);
+				const double df = q.d1.dot(q.d1) + e.dot(q.d2);
+				if (!(df > 0.0))
+					break;
+				s = std::clamp(s - f / df, 0.0, 1.0);
+			}
+			worst = std::max(worst, (evaluate(piece, s).p - target).length());
+		}
+		return worst;
+	}
+
+	// Samples of the fold value along the curve, to find where it changes sign.
+	constexpr int FOLD_SAMPLES = 64;
+
+	// Where the offset by d folds: the t values at which
+	// 1 + d·(B'' × B')/|B'|³ (one minus d times the curvature) crosses zero.
+	// There the true offset has a cusp, and halving near it would leave a piece
+	// across it. Found by its sign changes between samples, then bisection.
+	template <class C>
+	std::vector<double> fold_points(const C& curve, double d)
+	{
+		const auto fold = [&](double t) {
+			const PointAndDerivatives j = evaluate(curve, t);
+			const double speed = j.d1.length();
+			return 1.0 + d * j.d2.cross(j.d1) / (speed * speed * speed);
+		};
+		std::vector<double> ts;
+		double t0 = 0.0;
+		double f0 = fold(0.0);
+		for (int i = 1; i <= FOLD_SAMPLES; ++i)
+		{
+			const double t1 = static_cast<double>(i) / FOLD_SAMPLES;
+			const double f1 = fold(t1);
+			if (std::isfinite(f0) && std::isfinite(f1) && f0 * f1 < 0.0)
+			{
+				double lo = t0;
+				double hi = t1;
+				const bool positive = f0 > 0.0;
+				for (int k = 0; k < 60 && hi - lo > 1e-15; ++k)
+				{
+					const double mid = (lo + hi) / 2.0;
+					if ((fold(mid) > 0.0) == positive)
+						lo = mid;
+					else
+						hi = mid;
+				}
+				ts.push_back((lo + hi) / 2.0);
+			}
+			t0 = t1;
+			f0 = f1;
+		}
+		return ts;
+	}
+
+	// Halves `curve` until each piece is simple and its offset is within
+	// `tolerance` of the true offset, and appends the offsets to `result`. A
+	// piece too small to halve, or at MAX_DEPTH, keeps the offset it has.
+	template <class C, class SplitFn, class IsSimpleFn, class StopFn, class OffsetFn>
+	void offset_until_accurate(
+		C curve,
+		double offset_distance,
+		double tolerance,
+		std::vector<C>& result,
+		SplitFn split_fn,
+		IsSimpleFn is_simple_fn,
+		StopFn should_stop_fn,
+		OffsetFn offset_fn)
+	{
+		std::vector<std::pair<C, int>> stack = { { curve, 0 } };
 
 		while (!stack.empty())
 		{
-			C segment = stack.back();
+			const auto [segment, depth] = stack.back();
 			stack.pop_back();
 
-			if (is_safe_fn(segment))
+			std::optional<C> piece;
+			if (is_simple_fn(segment))
+				piece = offset_fn(segment);
+			if (piece && offset_error(segment, *piece, offset_distance) <= tolerance)
 			{
-				safe_curves.push_back(segment);
+				result.push_back(*piece);
 				continue;
 			}
-			if (should_stop_fn(segment))
+			if (depth >= MAX_DEPTH || should_stop_fn(segment))
+			{
+				if (piece)
+					result.push_back(*piece);
 				continue;
+			}
 
 			const auto [left, right] = split_fn(segment, 0.5);
 			// Push right first so left is processed first (stable order).
-			stack.push_back(right);
-			stack.push_back(left);
+			stack.push_back({ right, depth + 1 });
+			stack.push_back({ left, depth + 1 });
 		}
 	}
 
@@ -248,9 +386,9 @@ namespace
 	}
 
 	std::optional<QuadraticBezier>
-		offset_quadratic(Vec2 p0, Vec2 p1, Vec2 p2, double offset_distance)
+		offset_quadratic(Vec2 p0, Vec2 p1, Vec2 p2, double offset_distance, double size)
 	{
-		if (is_quadratic_degenerate(p0, p1, p2))
+		if (is_quadratic_degenerate(p0, p1, p2, size))
 			return std::nullopt;
 
 		const Vec2 d0 = quadratic_bezier_derivative(p0, p1, p2, 0.0);
@@ -267,9 +405,9 @@ namespace
 	}
 
 	std::optional<CubicBezier>
-		offset_cubic(Vec2 p0, Vec2 p1, Vec2 p2, Vec2 p3, double offset_distance)
+		offset_cubic(Vec2 p0, Vec2 p1, Vec2 p2, Vec2 p3, double offset_distance, double size)
 	{
-		if (is_cubic_degenerate(p0, p1, p2, p3))
+		if (is_cubic_degenerate(p0, p1, p2, p3, size))
 			return std::nullopt;
 
 		const Vec2 d0 = cubic_bezier_derivative(p0, p1, p2, p3, 0.0);
@@ -306,37 +444,43 @@ namespace stroke_outline::bezier
 			const Vec2 by = shifted->first - p0;
 			return { QuadraticBezier { p0 + by, p1 + by, p2 + by } };
 		}
-		if (is_quadratic_degenerate(p0, p1, p2))
+		const double size = curve_size({ p0, p1, p2 });
+		// A curve collapsed to a point (or a non-finite one) has no offset.
+		if (!(size > 0.0))
+			return {};
+		if (is_quadratic_degenerate(p0, p1, p2, size))
 			return {};
 
-		const auto split_points = quadratic_split_points(p0, p1, p2);
 		const QuadraticBezier source_curve { p0, p1, p2 };
+		// Split at the extrema, as Bezier.reduce does, and where the offset folds.
+		auto split_points = quadratic_split_points(p0, p1, p2);
+		for (const double t: fold_points(source_curve, offset_distance))
+			split_points.push_back(t);
+		split_points = unique_sorted_ts(std::move(split_points));
 		const auto curves =
 			split_curve_at_ts(source_curve, split_points, [](QuadraticBezier curve, double t) {
 				return split_quadratic_bezier(curve.p0, curve.p1, curve.p2, t);
 			});
-		std::vector<QuadraticBezier> safe_curves;
+		const double tolerance = RELATIVE_TOLERANCE * std::abs(offset_distance);
+		std::vector<QuadraticBezier> result;
 		for (const auto& curve: curves)
-			subdivide_until_safe(
+			offset_until_accurate(
 				curve,
-				safe_curves,
+				offset_distance,
+				tolerance,
+				result,
 				[](QuadraticBezier c, double t) {
 					return split_quadratic_bezier(c.p0, c.p1, c.p2, t);
 				},
 				[](QuadraticBezier curve) {
 					return is_quadratic_simple(curve.p0, curve.p1, curve.p2);
 				},
-				[](QuadraticBezier curve) {
-					return is_quadratic_too_small_to_subdivide(curve);
+				[size](QuadraticBezier curve) {
+					return is_quadratic_too_small_to_subdivide(curve, size);
+				},
+				[offset_distance, size](QuadraticBezier c) {
+					return offset_quadratic(c.p0, c.p1, c.p2, offset_distance, size);
 				});
-		std::vector<QuadraticBezier> result;
-		for (const auto& curve: safe_curves)
-		{
-			const auto offset_result =
-				offset_quadratic(curve.p0, curve.p1, curve.p2, offset_distance);
-			if (offset_result)
-				result.push_back(*offset_result);
-		}
 		return result;
 	}
 
@@ -353,35 +497,43 @@ namespace stroke_outline::bezier
 			const Vec2 by = shifted->first - p0;
 			return { CubicBezier { p0 + by, p1 + by, p2 + by, p3 + by } };
 		}
-		if (is_cubic_degenerate(p0, p1, p2, p3))
+		const double size = curve_size({ p0, p1, p2, p3 });
+		// A curve collapsed to a point (or a non-finite one) has no offset.
+		if (!(size > 0.0))
+			return {};
+		if (is_cubic_degenerate(p0, p1, p2, p3, size))
 			return {};
 
-		const auto split_points = cubic_split_points(p0, p1, p2, p3);
 		const CubicBezier source_curve { p0, p1, p2, p3 };
+		// Split at the extrema, as Bezier.reduce does, and where the offset folds.
+		auto split_points = cubic_split_points(p0, p1, p2, p3);
+		for (const double t: fold_points(source_curve, offset_distance))
+			split_points.push_back(t);
+		split_points = unique_sorted_ts(std::move(split_points));
 		const auto curves =
 			split_curve_at_ts(source_curve, split_points, [](CubicBezier curve, double t) {
 				return split_cubic_bezier(curve.p0, curve.p1, curve.p2, curve.p3, t);
 			});
-		std::vector<CubicBezier> safe_curves;
+		const double tolerance = RELATIVE_TOLERANCE * std::abs(offset_distance);
+		std::vector<CubicBezier> result;
 		for (const auto& curve: curves)
-			subdivide_until_safe(
+			offset_until_accurate(
 				curve,
-				safe_curves,
+				offset_distance,
+				tolerance,
+				result,
 				[](CubicBezier c, double t) {
 					return split_cubic_bezier(c.p0, c.p1, c.p2, c.p3, t);
 				},
 				[](CubicBezier curve) {
 					return is_cubic_simple(curve.p0, curve.p1, curve.p2, curve.p3);
 				},
-				[](CubicBezier curve) { return is_cubic_too_small_to_subdivide(curve); });
-		std::vector<CubicBezier> result;
-		for (const auto& curve: safe_curves)
-		{
-			const auto offset_result =
-				offset_cubic(curve.p0, curve.p1, curve.p2, curve.p3, offset_distance);
-			if (offset_result)
-				result.push_back(*offset_result);
-		}
+				[size](CubicBezier curve) {
+					return is_cubic_too_small_to_subdivide(curve, size);
+				},
+				[offset_distance, size](CubicBezier c) {
+					return offset_cubic(c.p0, c.p1, c.p2, c.p3, offset_distance, size);
+				});
 		return result;
 	}
 }
