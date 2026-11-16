@@ -77,6 +77,9 @@ export function bind(form: HTMLFormElement, render: () => void) {
 	};
 	form.addEventListener('input', sync);
 	form.addEventListener('submit', e => e.preventDefault());
+	// Colours are read from CSS when drawing, so redraw when the system switches
+	// between light and dark.
+	matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
 	sync();
 }
 
