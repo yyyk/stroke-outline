@@ -1,5 +1,9 @@
 # stroke-outline
 
+[![npm](https://img.shields.io/npm/v/stroke-outline)](https://www.npmjs.com/package/stroke-outline)
+[![CI](https://github.com/yyyk/stroke-outline/actions/workflows/ci.yml/badge.svg)](https://github.com/yyyk/stroke-outline/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 Turn vector paths into the filled outline of their stroke — the geometry a
 canvas draws for `stroke()`, returned as a path you can fill, cache, hit-test
 or tessellate. A WebAssembly build of a C++ library; works in browsers, workers
