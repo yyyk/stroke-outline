@@ -2,6 +2,7 @@
 
 [![npm](https://img.shields.io/npm/v/stroke-outline)](https://www.npmjs.com/package/stroke-outline)
 [![CI](https://github.com/yyyk/stroke-outline/actions/workflows/ci.yml/badge.svg)](https://github.com/yyyk/stroke-outline/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 A small C++20 library that turns a vector path into the filled outline of its
 stroke — the same geometry a 2D canvas produces for `stroke()`, but returned as
