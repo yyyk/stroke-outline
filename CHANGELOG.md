@@ -105,6 +105,7 @@ WebAssembly.
 - TypeScript types included. The WebAssembly binary is embedded, so it works
   in browsers, workers and Node 20+ with no bundler setup.
 
+[0.1.5]: https://github.com/yyyk/stroke-outline/releases/tag/v0.1.5
 [0.1.4]: https://github.com/yyyk/stroke-outline/releases/tag/v0.1.4
 [0.1.3]: https://github.com/yyyk/stroke-outline/releases/tag/v0.1.3
 [0.1.2]: https://github.com/yyyk/stroke-outline/releases/tag/v0.1.2
