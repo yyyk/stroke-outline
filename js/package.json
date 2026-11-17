@@ -1,6 +1,6 @@
 {
   "name": "stroke-outline",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Stroke vector paths into fillable outlines: joins, caps, dashes, inside/outside alignment and clipping. WebAssembly build of a C++ library.",
   "author": "yyyk",
   "keywords": [
@@ -47,6 +47,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json && node scripts/copy-wasm.mjs",
     "test": "npm run build && node --test test/*.test.mjs",
+    "bench": "npm run build && node bench/bench.mjs",
     "format": "prettier --ignore-path ../.prettierignore --write \"**/*.{ts,mjs,json,md}\" ../README.md ../CHANGELOG.md",
     "format:check": "prettier --ignore-path ../.prettierignore --check \"**/*.{ts,mjs,json,md}\" ../README.md ../CHANGELOG.md",
     "prepack": "npm run build"

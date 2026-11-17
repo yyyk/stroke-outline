@@ -413,6 +413,34 @@ namespace
 		}
 	}
 
+	// The same contours walked the other way: each from its start, back along
+	// its closing line, then its commands in reverse. Same geometry.
+	std::vector<PathCommand> reverse_contours(const std::vector<PathCommand>& contours)
+	{
+		std::vector<PathCommand> result;
+		std::size_t i = 0;
+		while (i < contours.size())
+		{
+			const Vec2 start = std::get<MoveTo>(contours[i]).p;
+			std::vector<PathCommand> body;
+			Vec2 last = start;
+			for (++i; i < contours.size() && !std::holds_alternative<MoveTo>(contours[i]); ++i)
+			{
+				if (std::holds_alternative<Close>(contours[i]))
+					continue;
+				body.push_back(contours[i]);
+				last = *end_point(contours[i]);
+			}
+			result.push_back(MoveTo { start });
+			if (last != start)
+				result.push_back(LineTo { last });
+			const auto back = reverse_commands(body, start);
+			result.insert(result.end(), back.begin(), back.end());
+			result.push_back(Close {});
+		}
+		return result;
+	}
+
 	std::vector<PathCommand> finalize_closed_path(
 		const std::vector<SegmentOffset>& offsets,
 		const StrokeSettings& settings,
@@ -432,7 +460,11 @@ namespace
 		std::vector<PathCommand> result;
 		result.insert(result.end(), outer.begin(), outer.end());
 		result.insert(result.end(), inner.begin(), inner.end());
-		return result;
+		// Walking the outer side forward makes the ring wind the subpath's way.
+		// Every outline winds the same way as an open stroke's (negative signed
+		// area, the stroke on its right), so where strokes overlap their windings
+		// add up instead of cancelling, and nonzero fills the overlap.
+		return is_ccw ? reverse_contours(result) : result;
 	}
 
 	std::vector<PathCommand> finalize_open_path(

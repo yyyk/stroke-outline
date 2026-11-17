@@ -5,6 +5,26 @@ All notable changes to this project are documented here. The format follows
 [Semantic Versioning](https://semver.org/) (while the version is 0.x, minor
 versions may change the API).
 
+## [0.1.6] - 2026-11-17
+
+### Fixed
+
+- Where strokes of different subpaths overlap, nonzero now fills the overlap.
+  A closed subpath's outline wound the subpath's own way, while an open
+  subpath's (and a dash's) always wound the other way, so a closed subpath
+  drawn counterclockwise (in y-up coordinates) and an open stroke crossing it,
+  or two closed subpaths drawn in opposite directions, cancelled out and left
+  a hole, as in an envelope icon's frame and flap. `clip_to_shape`'s output
+  had the same problem.
+
+### Changed
+
+- Every outline contour now winds the same way: the stroke on its right
+  (negative signed area in y-up coordinates). Open strokes and dashes are
+  unchanged; outlines of closed subpaths drawn counterclockwise, and
+  `clip_to_shape`'s output, are now walked the other way, with the same
+  geometry.
+
 ## [0.1.5] - 2026-11-16
 
 ### Changed
@@ -105,6 +125,7 @@ WebAssembly.
 - TypeScript types included. The WebAssembly binary is embedded, so it works
   in browsers, workers and Node 20+ with no bundler setup.
 
+[0.1.6]: https://github.com/yyyk/stroke-outline/releases/tag/v0.1.6
 [0.1.5]: https://github.com/yyyk/stroke-outline/releases/tag/v0.1.5
 [0.1.4]: https://github.com/yyyk/stroke-outline/releases/tag/v0.1.4
 [0.1.3]: https://github.com/yyyk/stroke-outline/releases/tag/v0.1.3

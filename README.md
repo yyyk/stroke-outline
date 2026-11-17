@@ -51,6 +51,70 @@ holes where it overlaps, and code that needs simple polygons (some
 triangulators, boolean ops) has to resolve the overlaps first — or enable
 `clip_to_shape`, which does that for closed subpaths.
 
+## Performance
+
+Three inputs, each stroked whole (`bench/inputs/`), and under each its outline
+with `clip_to_shape`: a light fill with the outline's contours on top (click a
+picture to open it and zoom in).
+
+**Glyphs**: 4 lines of 16 px text in Source Sans Pro (417 contours of lines and
+cubics), stroke width 0.5.
+
+<img src="bench/inputs/glyphs.svg" alt="Four lines of text" width="600">
+
+<img src="bench/inputs/glyphs-outline.svg" alt="The text's stroke outline with clip_to_shape" width="600">
+
+**Icons**: 12 outline icons on a 24-unit grid (lines, arcs and curves), stroke
+width 2.
+
+<img src="bench/inputs/icons.svg" alt="Twelve outline icons" width="576">
+
+<img src="bench/inputs/icons-outline.svg" alt="The icons' stroke outlines with clip_to_shape" width="576">
+
+**Freehand**: one open path of 400 cubics, stroke width 4 (open paths aren't
+clipped).
+
+<img src="bench/inputs/freehand.svg" alt="A long, winding freehand line" width="300">
+
+<img src="bench/inputs/freehand-outline.svg" alt="The freehand line's stroke outline with clip_to_shape" width="300">
+
+The time to stroke each whole input once, with the default settings (miter
+joins, butt caps) and with `clip_to_shape`:
+
+| Input    | Segments in → out | Settings        | C++ (native) | npm (WebAssembly) |
+| -------- | ----------------- | --------------- | ------------ | ----------------- |
+| Glyphs   | 3,675 → 17,708    | default         | 7.4 ms       | 17.8 ms (2.4×)    |
+|          |                   | `clip_to_shape` | 42.0 ms      | 67.3 ms (1.6×)    |
+| Icons    | 94 → 422          | default         | 188 µs       | 459 µs (2.4×)     |
+|          |                   | `clip_to_shape` | 930 µs       | 1,606 µs (1.7×)   |
+| Freehand | 400 → 2,949       | default         | 1.6 ms       | 3.2 ms (2.0×)     |
+
+Round joins and caps, and dashes, cost about the same as the default (within
+about 15%). `clip_to_shape` costs 5–6× the default natively and 3–4× in
+WebAssembly on closed shapes; open paths like the freehand one are passed
+through, so cost nothing extra. Outlines have about 4.5–7.5 segments per
+segment in. The npm times include turning the outline into JavaScript
+commands.
+
+Measured on an Apple M5 Pro (macOS 26.7): C++ built with Apple clang 21 (the
+`native-release` preset), npm with Node 24.22 and the WebAssembly module built
+by Emscripten 7.0. Each time is the median of 7 runs, each repeated for at
+least 100 ms. To rerun:
+
+```sh
+# C++
+cmake --build --preset native-release --target stroke_outline_bench
+bin/native/stroke_outline_bench
+
+# npm: the WASM module, then the package and the benchmark
+cmake --build --preset wasm-release
+cd js && npm run bench
+```
+
+`bench/generate-inputs.py` makes the inputs and their pictures (see its header),
+and `node js/bench/pictures.mjs` (after `npm run build` in `js/`) the outline
+pictures.
+
 ## Layout
 
 ```
@@ -60,6 +124,7 @@ bindings/               Embind glue, WASM-only
 sandbox/native/         native demo executable
 sandbox/web/            Vite + TypeScript browser sandbox
 tests/                  doctest unit tests (ctest)
+bench/                  benchmark inputs (bench/inputs/) and the native benchmark
 cmake/                  helper modules (Emscripten finder, format targets)
 ```
 
@@ -181,7 +246,7 @@ only the same minor version is compatible.
 include(FetchContent)
 FetchContent_Declare(stroke_outline
     GIT_REPOSITORY https://github.com/yyyk/stroke-outline.git
-    GIT_TAG v0.1.5)
+    GIT_TAG v0.1.6)
 FetchContent_MakeAvailable(stroke_outline)
 target_link_libraries(app PRIVATE stroke_outline::stroke_outline)
 ```
@@ -292,4 +357,6 @@ under the ISC license, and the arc length and curve offsetting
 (`src/bezier/arc_length.cpp`, `src/bezier/offset.cpp`) are based on bezierjs by
 Pomax, under the MIT license; their notices are in
 [`THIRD_PARTY_NOTICES`](THIRD_PARTY_NOTICES) and ship with the CMake install and
-the npm package.
+the npm package. The benchmark's glyph outlines are from Source Sans Pro by
+Adobe, under the SIL Open Font License 1.1; see
+[`bench/inputs/glyphs-LICENSE.md`](bench/inputs/glyphs-LICENSE.md).

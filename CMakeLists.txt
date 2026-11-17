@@ -12,7 +12,7 @@ if (USE_EMSCRIPTEN)
     include(find-Emscripten)
 endif()
 
-project(${TARGET_NAME} VERSION 0.1.5 LANGUAGES CXX)
+project(${TARGET_NAME} VERSION 0.1.6 LANGUAGES CXX)
 
 # Guard against being added twice (e.g. two consumers FetchContent this lib).
 if (TARGET ${TARGET_NAME})
@@ -125,6 +125,8 @@ if(EMSCRIPTEN)
 else()
     # ----- Native build: sandbox demo + tests -----
     add_subdirectory(sandbox/native)
+    # The benchmark: only built when asked for (see bench/native/CMakeLists.txt).
+    add_subdirectory(bench/native EXCLUDE_FROM_ALL)
 
     enable_testing()
     add_subdirectory(tests)

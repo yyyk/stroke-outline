@@ -176,12 +176,18 @@ TEST_CASE("collapsed boundary reuses the original curve verbatim")
 
 	const auto out = build_stroke_outline(path, settings);
 
+	// In either direction: outlines all wind the same way, so a CCW shape's
+	// ring is walked backward and the cubic appears reversed (from its end
+	// (100, 100) back to its start (100, 0)).
 	const int exact_matches = count_of(out, [&](const PathCommand& c) {
 		if (!std::holds_alternative<CubicTo>(c))
 			return false;
 		const auto& cubic = std::get<CubicTo>(c);
-		return cubic.control1 == edge.control1 && cubic.control2 == edge.control2
-			   && cubic.end == edge.end;
+		const bool forward = cubic.control1 == edge.control1
+							 && cubic.control2 == edge.control2 && cubic.end == edge.end;
+		const bool backward = cubic.control1 == edge.control2
+							  && cubic.control2 == edge.control1 && cubic.end == Vec2 { 100, 0 };
+		return forward || backward;
 	});
 	CHECK(exact_matches == 1);
 }
@@ -705,4 +711,112 @@ TEST_CASE("straight curves stroke as a band, not a zero-width line")
 		CHECK(s.min_x() == doctest::Approx(0.0));
 		CHECK(s.max_x() == doctest::Approx(100.0));
 	}
+}
+
+namespace
+{
+	// The outline's winding number at q.
+	int outline_winding(const char* d, const StrokeSettings& settings, Pt q)
+	{
+		return winding(flatten(build_outline(d, settings)), q);
+	}
+
+	// The most positive winding number over a 0.5-unit grid around the outline.
+	int max_winding(const char* d, const StrokeSettings& settings)
+	{
+		const auto polys = flatten(build_outline(d, settings));
+		double min_x = 1e30, min_y = 1e30, max_x = -1e30, max_y = -1e30;
+		for (const auto& pl: polys)
+			for (const Pt p: pl)
+			{
+				min_x = std::min(min_x, p.x);
+				min_y = std::min(min_y, p.y);
+				max_x = std::max(max_x, p.x);
+				max_y = std::max(max_y, p.y);
+			}
+		int most = std::numeric_limits<int>::min();
+		for (double y = min_y + 0.25; y < max_y; y += 0.5)
+			for (double x = min_x + 0.25; x < max_x; x += 0.5)
+				most = std::max(most, winding(polys, { x, y }));
+		return most;
+	}
+}
+
+TEST_CASE("overlapping strokes of different subpaths add up under nonzero")
+{
+	// Regression: a closed subpath's outline wound the subpath's way, while an
+	// open one's always wound the other way, so where strokes of opposite
+	// windings overlapped they cancelled and nonzero left a hole.
+	struct Case
+	{
+		const char* name;
+		const char* d;
+		Pt overlap;
+	};
+	const Case cases[] = {
+		// An icon: a closed frame (positive area) and an open flap across it.
+		{ "mail icon", "M3 6 H21 V18 H3 Z M3 6 L12 13 L21 6", { 4.2, 6.4 } },
+		{ "closed square and open line", "M0 0 H10 V10 H0 Z M-5 5 L15 5", { 0, 5 } },
+		{ "closed square and reversed line", "M0 0 H10 V10 H0 Z M15 5 L-5 5", { 0, 5 } },
+		{ "closed squares, opposite directions",
+		  "M0 0 H10 V10 H0 Z M5 5 V15 H15 V5 Z",
+		  { 10, 5 } },
+		{ "closed squares, same direction", "M0 0 H10 V10 H0 Z M5 5 H15 V15 H5 Z", { 10, 5 } },
+	};
+	for (const auto& [name, d, q]: cases)
+		for (const bool clip: { false, true })
+		{
+			CAPTURE(name);
+			CAPTURE(clip);
+			const StrokeSettings settings { .line_width = 2.0, .clip_to_shape = clip };
+			CHECK(outline_winding(d, settings, q) != 0);
+		}
+}
+
+TEST_CASE("every outline winds the same way: the stroke on its right")
+{
+	// Nowhere positive: each contour bounding the stroke winds -1 around it,
+	// for closed subpaths of either direction, open ones, dashes, dots,
+	// alignment and clip_to_shape (both when it cuts and when it doesn't).
+	// Width 60 is wider than some shapes' walls, where only clip_to_shape gives
+	// a correct outline (the raw one turns inside out), so it is checked
+	// clipped only.
+	const char* shapes[] = {
+		kSquare,
+		"M 0 0 V 100 H 100 V 0 Z",  // kSquare the other way
+		kFrame,
+		kSameDirFrame,
+		kRing,
+		kLShape,
+		kCircle,
+		kOverlapping,
+		"M 0 0 L 100 0 L 100 100",
+		"M 0 0 L 100 0 M 100 50 L 0 50",
+	};
+	for (const char* d: shapes)
+		for (const double width: { 10.0, 60.0 })
+			for (const StrokeAlign align:
+				 { StrokeAlign::Center, StrokeAlign::Inside, StrokeAlign::Outside })
+				for (const bool clip: { false, true })
+					for (const bool dashes: { false, true })
+					{
+						if (width > 10.0 && !clip)
+							continue;
+						const std::string shape = d;
+						CAPTURE(shape);
+						CAPTURE(width);
+						CAPTURE(static_cast<int>(align));
+						CAPTURE(clip);
+						CAPTURE(dashes);
+						StrokeSettings settings {
+							.line_width = width,
+							.line_join = LineJoin::Round,
+							.line_cap = LineCap::Round,
+							.align = align,
+							.clip_to_shape = clip,
+						};
+						if (dashes)
+							settings.dash = DashSettings { .dash_pattern = { 30, 10, 0, 10 } };
+						CHECK(max_winding(d, settings) <= 0);
+					}
 }

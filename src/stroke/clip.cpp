@@ -38,7 +38,8 @@
 //      crosses another except at its ends.
 //   3. Classify each piece by testing F just to its left and right. A piece is
 //      on F's boundary iff F holds on exactly one side. Keep those, oriented
-//      with F on their left so every loop winds +1 around F.
+//      with F on their right so every loop winds -1 around F, as every stroke
+//      outline does (so overlapping strokes add up under nonzero).
 //   4. Chain the kept pieces end to end into closed contours.
 // Curves are only ever *split* (never approximated), so the output is made of
 // the same line and curve pieces as the inputs.
@@ -706,7 +707,7 @@ namespace stroke_outline
 				continue;
 			}
 
-			const Edge oriented = in_left ? e : reversed(e);
+			const Edge oriented = in_left ? reversed(e) : e;
 			// Coincident pieces (e.g. an inside stroke's outer edge lying on the
 			// shape) classify identically; keep just the first, which comes from
 			// the outline.
@@ -725,8 +726,8 @@ namespace stroke_outline
 			if (piece.from_outline)
 			{
 				if (!outline_flip)
-					outline_flip = !in_left;
-				outline_as_is = outline_as_is && *outline_flip == !in_left;
+					outline_flip = in_left;
+				outline_as_is = outline_as_is && *outline_flip == in_left;
 			}
 			else
 				outline_as_is = false;
@@ -735,9 +736,32 @@ namespace stroke_outline
 		}
 
 		// Fast path for the common case: nothing crossed and the outline already
-		// bounds F exactly — return it verbatim.
+		// bounds F exactly — return it verbatim, or walked the other way if every
+		// piece has F on its left.
 		if (!any_split && outline_as_is)
-			return outline;
+		{
+			if (!outline_flip.value_or(false))
+				return outline;
+			std::vector<PathCommand> result;
+			std::vector<PathCommand> contour;
+			const auto flush = [&] {
+				auto edges = contour_edges(contour);
+				std::reverse(edges.begin(), edges.end());
+				for (auto& e: edges)
+					e = reversed(e);
+				emit_contour(edges, result);
+				contour.clear();
+			};
+			for (const auto& cmd: outline)
+			{
+				if (std::holds_alternative<MoveTo>(cmd) && !contour.empty())
+					flush();
+				contour.push_back(cmd);
+			}
+			if (!contour.empty())
+				flush();
+			return result;
+		}
 
 		// Stage 4: chain kept pieces end to end into closed contours. Every vertex
 		// of a region boundary has as many pieces leaving as arriving, so a greedy
