@@ -183,10 +183,12 @@ TEST_CASE("collapsed boundary reuses the original curve verbatim")
 		if (!std::holds_alternative<CubicTo>(c))
 			return false;
 		const auto& cubic = std::get<CubicTo>(c);
-		const bool forward = cubic.control1 == edge.control1
-							 && cubic.control2 == edge.control2 && cubic.end == edge.end;
-		const bool backward = cubic.control1 == edge.control2
-							  && cubic.control2 == edge.control1 && cubic.end == Vec2 { 100, 0 };
+		const bool forward =
+			cubic.control1 == edge.control1 && cubic.control2 == edge.control2
+			&& cubic.end == edge.end;
+		const bool backward =
+			cubic.control1 == edge.control2 && cubic.control2 == edge.control1
+			&& cubic.end == Vec2 { 100, 0 };
 		return forward || backward;
 	});
 	CHECK(exact_matches == 1);
