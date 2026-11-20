@@ -18,10 +18,13 @@ namespace stroke_outline
 			if (points_are_too_close(side_points_info.prev, side_points_info.next))
 				return { JoinSideResult::Kind::Inner, {} };
 			// Otherwise the corner wasn't trimmed (segments too short for the offset
-			// edges to cross within them). Bevel straight across the concave side —
-			// connecting the two edge ends directly — rather than detouring through
-			// the centerline, which would insert an extra corner there.
-			return { JoinSideResult::Kind::Inner, { LineTo { side_points_info.next } } };
+			// edges to cross within them). Pass through the corner itself, as Skia's
+			// stroker does: the outline then doubles back over the segments' own
+			// bands, which nonzero fills as their union. Beveling straight across
+			// instead would fill a wedge outside the stroke, visible where nothing
+			// else covers it, such as a short segment at an open end.
+			return { JoinSideResult::Kind::Inner,
+					 { LineTo { position }, LineTo { side_points_info.next } } };
 		}
 		return { JoinSideResult::Kind::Outer, outer_commands_for_side(side, settings) };
 	}

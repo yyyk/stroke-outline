@@ -3,6 +3,7 @@
 #include <algorithm>
 
 // Line joins (src/stroke/join.cpp), observed through the public API.
+#include "support/coverage.hpp"
 #include "support/outline.hpp"
 
 using namespace stroke_outline;
@@ -118,5 +119,96 @@ TEST_CASE("a nearly straight corner adds no join geometry")
 			width(10.0, join));
 		CHECK(s.max_y() == doctest::Approx(5.0).epsilon(1e-3));
 		CHECK(s.min_y() == doctest::Approx(-5.0).epsilon(1e-3));
+	}
+}
+
+namespace
+{
+	// How many grid samples near `centre`'s corners an open polyline's outline
+	// (butt caps, round joins) gets wrong, against the exact stroke region: in
+	// a segment's butt rectangle, or in a join's disc sector on the outer side
+	// of its corner (a round join adds nothing on the inner side, as in canvas).
+	int open_stroke_mismatches(const std::vector<Pt>& centre, double w)
+	{
+		Path path;
+		path.move_to(centre[0].x, centre[0].y);
+		for (std::size_t i = 1; i < centre.size(); ++i)
+			path.line_to(centre[i].x, centre[i].y);
+		auto settings = width(w, LineJoin::Round);
+		settings.line_cap = LineCap::Butt;
+		const auto outline = flatten(build_outline(path, settings));
+
+		const double h = w / 2;
+		const auto in_stroke = [&](Pt q) {
+			for (std::size_t i = 0; i + 1 < centre.size(); ++i)
+			{
+				const Pt a = centre[i], b = centre[i + 1];
+				const double len = std::hypot(b.x - a.x, b.y - a.y);
+				const double ux = (b.x - a.x) / len, uy = (b.y - a.y) / len;
+				const double along = (q.x - a.x) * ux + (q.y - a.y) * uy;
+				const double across = -(q.x - a.x) * uy + (q.y - a.y) * ux;
+				if (along >= 0 && along <= len && std::abs(across) <= h)
+					return true;
+			}
+			for (std::size_t i = 1; i + 1 < centre.size(); ++i)
+			{
+				const Pt v = centre[i];
+				const double dx = q.x - v.x, dy = q.y - v.y;
+				if (std::hypot(dx, dy) > h)
+					continue;
+				// The outer normals at the end of the segment before and the start
+				// of the one after: the join fills the sector between them.
+				const Pt a = centre[i - 1], b = centre[i + 1];
+				const double u1x = v.x - a.x, u1y = v.y - a.y;
+				const double u2x = b.x - v.x, u2y = b.y - v.y;
+				const double turn = u1x * u2y - u1y * u2x;
+				const double s = turn > 0 ? 1 : -1;  // the outer side is away from the turn
+				const double n1x = s * u1y, n1y = -s * u1x;
+				const double n2x = s * u2y, n2y = -s * u2x;
+				const double c12 = n1x * n2y - n1y * n2x;
+				const double c1q = n1x * dy - n1y * dx;
+				const double cq2 = dx * n2y - dy * n2x;
+				if ((c12 >= 0 && c1q >= 0 && cq2 >= 0) || (c12 < 0 && c1q <= 0 && cq2 <= 0))
+					return true;
+			}
+			return false;
+		};
+
+		// A fine grid (0.05) around every inner vertex, offset so that no
+		// sample sits exactly on an edge.
+		int bad = 0;
+		for (std::size_t i = 1; i + 1 < centre.size(); ++i)
+			for (double y = centre[i].y - 2 * w + 0.0123; y < centre[i].y + 2 * w; y += 0.05)
+				for (double x = centre[i].x - 2 * w + 0.0123; x < centre[i].x + 2 * w;
+					 x += 0.05)
+				{
+					const Pt q { x, y };
+					bad += (winding(outline, q) != 0) != in_stroke(q);
+				}
+		return bad;
+	}
+}
+
+TEST_CASE("a segment shorter than half the width at a corner adds nothing outside the stroke")
+{
+	// The inner side of such a corner can't be trimmed (the offset edges don't
+	// cross within the segments), so it has to pass through the corner: a
+	// straight bevel across it would fill a wedge outside the stroke. Shown at
+	// the open end, where nothing else covers that wedge.
+	const double w = 4.0;
+	const std::vector<std::vector<Pt>> cases {
+		{ { 0, 0 }, { 40, 0 }, { 40, -0.1 } },  // a short last segment, turning left
+		{ { 0, 0 }, { 40, 0 }, { 40, 0.1 } },   // turning right
+		{ { 40, -0.1 }, { 40, 0 }, { 0, 0 } },  // a short first segment
+		{ { 0, 0 }, { 40, 0 }, { 40, -1.5 } },  // shorter than half the width, but not tiny
+		{ { 0, 0 }, { 40, 0 }, { 40, -0.5 }, { 80, -0.5 } },  // a short step in the middle
+	};
+	for (const auto& centre: cases)
+	{
+		CAPTURE(centre.back().x);
+		CAPTURE(centre.back().y);
+		// A few samples right on a round join's arc could disagree, since the
+		// test helper flattens it; none do now, against ~700 for the old bevel.
+		CHECK(open_stroke_mismatches(centre, w) <= 5);
 	}
 }

@@ -5,6 +5,17 @@ All notable changes to this project are documented here. The format follows
 [Semantic Versioning](https://semver.org/) (while the version is 0.x, minor
 versions may change the API).
 
+## [0.1.7] - 2026-11-20
+
+### Fixed
+
+- A segment shorter than half the stroke width at a corner no longer adds a
+  wedge outside the stroke. Where the inner side of such a corner can't be
+  trimmed (the offset edges don't cross within the segments), the outline now
+  passes through the corner, as Skia's stroker does, instead of beveling
+  straight across. The wedge showed at open ends with butt or square caps,
+  such as a piece of a path cut just past a corner.
+
 ## [0.1.6] - 2026-11-17
 
 ### Fixed
@@ -125,6 +136,7 @@ WebAssembly.
 - TypeScript types included. The WebAssembly binary is embedded, so it works
   in browsers, workers and Node 20+ with no bundler setup.
 
+[0.1.7]: https://github.com/yyyk/stroke-outline/releases/tag/v0.1.7
 [0.1.6]: https://github.com/yyyk/stroke-outline/releases/tag/v0.1.6
 [0.1.5]: https://github.com/yyyk/stroke-outline/releases/tag/v0.1.5
 [0.1.4]: https://github.com/yyyk/stroke-outline/releases/tag/v0.1.4
