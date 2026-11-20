@@ -1,7 +1,7 @@
 // The stroke-outline JavaScript API: a thin, typed wrapper over the WASM module.
 //
 //   import { init } from 'stroke-outline';
-//   const so = await init();
+//   const so = await init(); // or init(url): see init
 //   const outline = so.buildOutline('M 0 0 L 100 0', { lineWidth: 8, lineCap: 'round' });
 //   ctx.fill(new Path2D(outline.toSVG()));
 //
@@ -114,12 +114,73 @@ export interface StrokeOutline {
 }
 
 /**
- * Load the WASM module and return the API. Call once and reuse the result.
- * The WebAssembly binary is embedded in the package, so there is no file to
- * serve or locate.
+ * Where `init` gets the WebAssembly binary: a URL (or request) to fetch, a
+ * fetched `Response`, the bytes, or a compiled module.
  */
-export async function init(): Promise<StrokeOutline> {
-	return createApi(await createModule());
+export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
+
+/**
+ * Load the WASM module and return the API. Call once and reuse the result.
+ *
+ * With no argument, the WebAssembly binary embedded in the package is used, so
+ * no bundler or server setup is needed. To serve the .wasm file yourself
+ * instead (smaller download, compiled while it downloads), pass its URL, a
+ * `Response`, the bytes or a compiled module. With Vite:
+ * `import wasmUrl from "stroke-outline/stroke_outline.wasm?url"; await init(wasmUrl);`
+ */
+export async function init(wasm?: InitInput | Promise<InitInput>): Promise<StrokeOutline> {
+	const source = wasm === undefined ? await embeddedWasm() : await wasm;
+	// Emscripten calls instantiateWasm instead of loading the .wasm itself, but
+	// doesn't notice if it fails: without `failed`, init() would wait forever.
+	let fail!: (error: unknown) => void;
+	const failed = new Promise<never>((_, reject) => (fail = reject));
+	const module = createModule({
+		instantiateWasm(
+			imports: WebAssembly.Imports,
+			receive: (instance: WebAssembly.Instance) => void,
+		) {
+			instantiate(source, imports).then(receive, fail);
+			return {};
+		},
+	});
+	return createApi(await Promise.race([module, failed]));
+}
+
+/** The embedded binary: its own module, so bundlers only load it when it's used. */
+async function embeddedWasm(): Promise<Uint8Array> {
+	const { default: base64 } = await import('./wasm/stroke_outline_wasm_base64.js');
+	const binary = atob(base64);
+	const bytes = new Uint8Array(binary.length);
+	for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+	return bytes;
+}
+
+async function instantiate(
+	source: InitInput,
+	imports: WebAssembly.Imports,
+): Promise<WebAssembly.Instance> {
+	if (source instanceof WebAssembly.Module) return WebAssembly.instantiate(source, imports);
+	if (source instanceof ArrayBuffer)
+		return (await WebAssembly.instantiate(source, imports)).instance;
+	if (ArrayBuffer.isView(source)) {
+		// as bytes: V8's WebAssembly accepts typed arrays but not a DataView
+		const view = new Uint8Array(source.buffer, source.byteOffset, source.byteLength);
+		return (await WebAssembly.instantiate(view, imports)).instance;
+	}
+	const response = source instanceof Response ? source : await fetch(source);
+	if (!response.ok)
+		throw new Error(
+			`failed to load the WebAssembly binary from ${response.url}: ${response.status}`,
+		);
+	// Compile while downloading where the server says it's WebAssembly;
+	// otherwise (or where that fails) from the whole download.
+	if (response.headers.get('Content-Type')?.startsWith('application/wasm'))
+		try {
+			return (await WebAssembly.instantiateStreaming(response.clone(), imports)).instance;
+		} catch {
+			// fall through: a server that labels it but serves it in a way streaming can't use
+		}
+	return (await WebAssembly.instantiate(await response.arrayBuffer(), imports)).instance;
 }
 
 function createApi(module: MainModule): StrokeOutline {

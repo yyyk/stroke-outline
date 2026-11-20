@@ -165,8 +165,8 @@ in headers can show as uncovered even when used.
 ```sh
 cmake --preset wasm
 cmake --build --preset wasm-release
-# produces bin/wasm/stroke_outline.{js,d.ts} (ES6 module with the .wasm embedded,
-# plus TypeScript types)
+# produces bin/wasm/stroke_outline.{js,wasm,d.ts} (ES6 module, its .wasm, and
+# TypeScript types)
 ```
 
 ## Web sandbox (Vite)
@@ -283,6 +283,8 @@ complete one); enums are passed as `Module.<Enum>.<Value>`.
 ```ts
 import createModule from './stroke_outline.js';
 
+// Browsers: the module fetches stroke_outline.wasm from next to itself. Or hand
+// it the bytes, which also works in Node: createModule({ wasmBinary: bytes })
 const Module = await createModule();
 
 const settings = {

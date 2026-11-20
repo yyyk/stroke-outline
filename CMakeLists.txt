@@ -12,7 +12,7 @@ if (USE_EMSCRIPTEN)
     include(find-Emscripten)
 endif()
 
-project(${TARGET_NAME} VERSION 0.1.7 LANGUAGES CXX)
+project(${TARGET_NAME} VERSION 0.1.8 LANGUAGES CXX)
 
 # Guard against being added twice (e.g. two consumers FetchContent this lib).
 if (TARGET ${TARGET_NAME})
@@ -92,26 +92,31 @@ if(EMSCRIPTEN)
         -sEXPORT_ES6=1
         # No `node`: its startup code imports node:module, which every browser
         # bundler (e.g. Vite) warns about. The package still runs in Node 20+,
-        # which has the web APIs the module uses; the .wasm is embedded
-        # (SINGLE_FILE), so there is no file to read from disk. CI runs the JS
-        # tests on Node 20, 22 and 24 to keep it that way.
+        # which has the web APIs the module uses; the package's init() hands
+        # the module its .wasm, so it never reads a file from disk. CI runs the
+        # JS tests on Node 20, 22 and 24 to keep it that way.
         -sENVIRONMENT=web,worker
         -sALLOW_MEMORY_GROWTH=1
-        # Embed the .wasm in the .js (base64), so the package needs no bundler
-        # or server setup to find it (Vite's dev server, for one, can't locate a
-        # separate .wasm in a pre-bundled dependency).
-        -sSINGLE_FILE=1
+        # A separate .wasm, which apps can serve and load by URL (init(url)).
+        # The package also embeds it as base64 in its own module, loaded only
+        # when init() gets no URL, so it still needs no bundler or server setup.
+        # Emscripten never fetches the .wasm itself: init() always hands it over
+        # (instantiateWasm), so it doesn't matter that Vite's dev server can't
+        # locate a .wasm next to a pre-bundled dependency. wasmBinary is for
+        # users of the raw module, to pass the bytes (e.g. in Node).
+        -sINCOMING_MODULE_JS_API=wasmBinary,instantiateWasm
         # Emit TypeScript declarations alongside the module for typed JS/TS use.
         --emit-tsd "${TARGET_NAME}.d.ts"
     )
     set_target_properties(${TARGET_NAME}_wasm PROPERTIES OUTPUT_NAME "${TARGET_NAME}")
 
-    # Publish the built module (.js with the .wasm embedded, .d.ts) into the npm package (js/),
+    # Publish the built module (.js, .wasm, .d.ts) into the npm package (js/),
     # which imports it with full TypeScript types. The web sandbox and the docs
     # site use the package from source, so they get it from there.
     set(PACKAGE_WASM_DIR "${CMAKE_CURRENT_SOURCE_DIR}/js/src/wasm")
     set(WASM_OUTPUTS
         "$<TARGET_FILE_DIR:${TARGET_NAME}_wasm>/${TARGET_NAME}.js"
+        "$<TARGET_FILE_DIR:${TARGET_NAME}_wasm>/${TARGET_NAME}.wasm"
         "$<TARGET_FILE_DIR:${TARGET_NAME}_wasm>/${TARGET_NAME}.d.ts")
     # Release builds only: a Debug module is ~30x larger and unoptimized, and
     # must never end up in the package. (`cmake -E true` does nothing.)
@@ -119,8 +124,6 @@ if(EMSCRIPTEN)
     add_custom_command(TARGET ${TARGET_NAME}_wasm POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E ${IF_RELEASE},make_directory,true> "${PACKAGE_WASM_DIR}"
         COMMAND ${CMAKE_COMMAND} -E ${IF_RELEASE},copy_if_different,true> ${WASM_OUTPUTS} "${PACKAGE_WASM_DIR}/"
-        # A separate .wasm from a build before SINGLE_FILE would be stale.
-        COMMAND ${CMAKE_COMMAND} -E ${IF_RELEASE},rm,true> -f "${PACKAGE_WASM_DIR}/${TARGET_NAME}.wasm"
         COMMENT "Publishing WASM module into js/src/wasm (Release builds only)")
 else()
     # ----- Native build: sandbox demo + tests -----

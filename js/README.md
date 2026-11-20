@@ -81,11 +81,27 @@ All optional; omitted ones take these defaults.
 
 An unknown option value (e.g. `lineJoin: 'rounded'`) throws a `TypeError`.
 
-## Bundlers
+## Loading the WebAssembly
 
-The WebAssembly binary is embedded in the package's JavaScript, so there is no
-`.wasm` file to serve or configure: it works as is in Vite (dev and build),
-webpack, Rollup, esbuild and Node.
+`init()` with no argument uses a copy of the WebAssembly binary embedded in the
+package (as base64), so there is no `.wasm` file to serve or configure: it works
+as is in Vite (dev and build), webpack, Rollup, esbuild and Node.
+
+To load the `.wasm` file instead, pass it to `init`: its URL, a `Response`, the
+bytes or a compiled `WebAssembly.Module`. The download is smaller than the
+embedded copy, and the browser compiles it while it downloads. The package
+exports the file as `stroke-outline/stroke_outline.wasm`; with Vite:
+
+```js
+import { init } from 'stroke-outline';
+import wasmUrl from 'stroke-outline/stroke_outline.wasm?url';
+
+const so = await init(wasmUrl);
+```
+
+The embedded copy is in a module of its own, which `init` only imports when it
+gets no argument, so bundlers put it in a separate file that an app passing the
+`.wasm` never loads. `init` rejects if the binary can't be loaded or compiled.
 
 ## Building from source
 

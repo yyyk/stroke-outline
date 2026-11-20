@@ -5,6 +5,25 @@ All notable changes to this project are documented here. The format follows
 [Semantic Versioning](https://semver.org/) (while the version is 0.x, minor
 versions may change the API).
 
+## [0.1.8] - 2026-11-20
+
+### Added
+
+- `init(wasm)` can load the WebAssembly binary from a URL, a `Response`, the
+  bytes or a compiled `WebAssembly.Module`, instead of the copy embedded in
+  the package: a smaller download, compiled while it downloads. The package
+  exports the file as `stroke-outline/stroke_outline.wasm` (with Vite:
+  `import wasmUrl from 'stroke-outline/stroke_outline.wasm?url'`). `init()`
+  with no argument works as before.
+
+### Changed
+
+- The embedded copy of the binary is now in a module of its own, which `init`
+  only imports when it gets no argument, so bundlers put it in a separate file
+  that apps passing the `.wasm` never load. The WASM module itself is built
+  with a separate `.wasm` (no longer `SINGLE_FILE`); the raw module fetches it
+  from next to itself, or takes the bytes as `createModule({ wasmBinary })`.
+
 ## [0.1.7] - 2026-11-20
 
 ### Fixed
@@ -136,6 +155,7 @@ WebAssembly.
 - TypeScript types included. The WebAssembly binary is embedded, so it works
   in browsers, workers and Node 20+ with no bundler setup.
 
+[0.1.8]: https://github.com/yyyk/stroke-outline/releases/tag/v0.1.8
 [0.1.7]: https://github.com/yyyk/stroke-outline/releases/tag/v0.1.7
 [0.1.6]: https://github.com/yyyk/stroke-outline/releases/tag/v0.1.6
 [0.1.5]: https://github.com/yyyk/stroke-outline/releases/tag/v0.1.5
