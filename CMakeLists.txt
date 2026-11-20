@@ -125,6 +125,19 @@ if(EMSCRIPTEN)
         COMMAND ${CMAKE_COMMAND} -E ${IF_RELEASE},make_directory,true> "${PACKAGE_WASM_DIR}"
         COMMAND ${CMAKE_COMMAND} -E ${IF_RELEASE},copy_if_different,true> ${WASM_OUTPUTS} "${PACKAGE_WASM_DIR}/"
         COMMENT "Publishing WASM module into js/src/wasm (Release builds only)")
+    # And its base64 copy, which the package's init() falls back on, so that
+    # js/src/wasm is complete for whatever compiles the package from source
+    # (the docs site, the web sandbox) without building the package first.
+    # Emscripten runs on Node, and its toolchain file finds it for us.
+    if(NOT NODE_JS_EXECUTABLE)
+        find_program(NODE_JS_EXECUTABLE NAMES node nodejs REQUIRED)
+    endif()
+    add_custom_command(TARGET ${TARGET_NAME}_wasm POST_BUILD
+        COMMAND "$<IF:$<CONFIG:Release>,${NODE_JS_EXECUTABLE},${CMAKE_COMMAND}>"
+            "$<IF:$<CONFIG:Release>,${CMAKE_CURRENT_SOURCE_DIR}/js/scripts/embed-wasm.mjs,-E>"
+            "$<IF:$<CONFIG:Release>,${PACKAGE_WASM_DIR},true>"
+        COMMENT "Writing the base64 copy of the WASM into js/src/wasm (Release builds only)"
+        VERBATIM)
 else()
     # ----- Native build: sandbox demo + tests -----
     add_subdirectory(sandbox/native)

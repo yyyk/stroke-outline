@@ -1,27 +1,19 @@
 // Prepare the WASM module for the package: from what the cmake `wasm` build
 // published into src/wasm/ (the module's .js, its .wasm and their .d.ts), write
-// the .wasm as base64 into a module of its own (src/wasm/stroke_outline_wasm_base64.js,
-// which init() imports only when it isn't given the .wasm), then copy all of it
-// next to the compiled wrapper in dist/wasm/, and the repository's license
-// files into the package root. Runs before tsc, which needs the base64
-// module's declaration.
-import {
-	copyFileSync,
-	existsSync,
-	mkdirSync,
-	readFileSync,
-	rmSync,
-	statSync,
-	writeFileSync,
-} from 'node:fs';
+// the base64 copy of the .wasm again (embed-wasm.mjs: cmake already does, but
+// this keeps the package build complete on its own), then copy all of it next
+// to the compiled wrapper in dist/wasm/, and the repository's license files
+// into the package root. Runs before tsc, which needs the base64 module's
+// declaration.
+import { copyFileSync, existsSync, mkdirSync, rmSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { BASE64_MODULE, embedWasm } from './embed-wasm.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const from = join(root, 'src', 'wasm');
 const to = join(root, 'dist', 'wasm');
 const built = ['stroke_outline.js', 'stroke_outline.wasm', 'stroke_outline.d.ts'];
-const base64Module = 'stroke_outline_wasm_base64';
 
 for (const file of built)
 	if (!existsSync(join(from, file))) {
@@ -43,22 +35,11 @@ if (size > MAX_WASM_BYTES) {
 	process.exit(1);
 }
 
-// The embedded copy, for init() without a .wasm: in a module of its own, so
-// bundlers put it in its own chunk, which apps that pass the .wasm never load.
-const base64 = readFileSync(join(from, 'stroke_outline.wasm')).toString('base64');
-writeFileSync(
-	join(from, `${base64Module}.js`),
-	'// The WebAssembly binary as base64, for init() when it is not given the .wasm.\n' +
-		`export default ${JSON.stringify(base64)};\n`,
-);
-writeFileSync(
-	join(from, `${base64Module}.d.ts`),
-	'declare const base64: string;\nexport default base64;\n',
-);
+embedWasm(from);
 
 rmSync(to, { recursive: true, force: true }); // no stale files in the package
 mkdirSync(to, { recursive: true });
-for (const file of [...built, `${base64Module}.js`, `${base64Module}.d.ts`])
+for (const file of [...built, `${BASE64_MODULE}.js`, `${BASE64_MODULE}.d.ts`])
 	copyFileSync(join(from, file), join(to, file));
 
 // The repository's license files go into the package root too (npm only packs
